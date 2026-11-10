@@ -182,7 +182,7 @@ export function AdminSidebar({ userLabel, logoUrl = "/logo2.png", counts }: { us
     <aside className="relative z-50 flex w-full shrink-0 flex-col border-b border-black/5 bg-white px-3 py-2 md:h-full md:w-56 md:border-0 md:border-r md:border-black/10 md:bg-white md:py-3">
       <div className="flex min-h-11 shrink-0 items-center justify-between px-1 md:mb-2.5 md:justify-center md:px-3 md:py-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={logoUrl} alt="Logo de la tienda" className="h-9 w-auto md:h-8" />
+        <img src={logoUrl} alt="Logo de la tienda" className="h-10 w-auto max-w-[70%] object-contain object-left md:h-14 md:max-w-full md:object-center" />
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
