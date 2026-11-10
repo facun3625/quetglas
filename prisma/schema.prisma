@@ -33,8 +33,6 @@ model User {
   // haya llegado a cargar el teléfono.
   phone        String?
 
-  // id del cliente en WooCommerce — solo referencia de la migración (ver lib/woo)
-  wooId Int? @unique
 
   orders         Order[]
   abandonedCarts AbandonedCart[]
@@ -916,8 +914,6 @@ model Category {
   seoTitle       String?
   seoDescription String?
 
-  // Referencia de la migración desde WooCommerce
-  wooId Int? @unique
 
   products         ProductCategory[]
   coupons          Coupon[]
@@ -970,8 +966,6 @@ model Product {
   seoTitle       String?
   seoDescription String?
 
-  // Referencia de la migración desde WooCommerce
-  wooId Int? @unique
 
   images     ProductImage[]
   categories ProductCategory[]
@@ -1004,7 +998,7 @@ model ProductImage {
   // Si este lugar de la galería es un video: url/thumbUrl son su portada (un cuadro del video) y videoUrl el archivo.
   // Todo lo que usa la imagen (listados, carrito, mails, vista previa) sigue usando la portada sin enterarse.
   videoUrl  String?
-  // Referencia a la imagen original (Woo) para no re-subirla si se reintenta la migración
+  // Origen de la imagen (URL o archivo del ZIP de la importación por Excel) para no volver a subirla al reimportar
   sourceUrl String?
 
   variants Variant[]
@@ -1030,8 +1024,6 @@ model Attribute {
   sortOrder Int                @default(0)
   terms     AttributeTerm[]
   products  ProductAttribute[]
-
-  wooId Int? @unique
 }
 
 model AttributeTerm {
@@ -1086,8 +1078,6 @@ model Variant {
   terms      VariantAttributeTerm[]
   orderItems OrderItem[]
 
-  // Referencia de la migración desde WooCommerce
-  wooId Int? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1105,8 +1095,8 @@ model VariantAttributeTerm {
 }
 
 // Token de un solo uso para crear/restablecer la contraseña (se guarda el hash
-// SHA-256, nunca el token). También lo usan los clientes migrados desde
-// WooCommerce, que llegan sin contraseña.
+// SHA-256, nunca el token).
+// También sirve para mandar un enlace de activación a cuentas creadas sin contraseña.
 model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String
@@ -1119,30 +1109,29 @@ model PasswordResetToken {
   @@index([userId])
 }
 
-enum MigrationStatus {
+enum ImportStatus {
   running
   done
   failed
   cancelled
 }
 
-// Una corrida del migrador de WooCommerce. Las credenciales NO se guardan: viven
-// solo en memoria durante la corrida. Cada corrida es idempotente (upsert por wooId).
-model MigrationJob {
-  id              String          @id @default(cuid())
-  source          String          @default("woocommerce")
-  sourceUrl       String
-  status          MigrationStatus @default(running)
-  options         Json
+// Una importación de productos desde Excel. Corre en segundo plano (ver lib/productImport) y el panel consulta el progreso.
+// Reimportar el mismo archivo no duplica: productos y variantes se identifican por SKU.
+model ImportJob {
+  id              String       @id @default(cuid())
+  fileName        String
+  status          ImportStatus @default(running)
   // { step, label, done, total } del paso actual
-  progress        Json            @default("{}")
-  // { categories: {created, updated, skipped, failed}, ... }
-  counters        Json            @default("{}")
-  // Errores y avisos (máx. 200)
-  issues          Json            @default("[]")
-  cancelRequested Boolean         @default(false)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  progress        Json         @default("{}")
+  // { products: {created, updated, skipped, failed}, variants: …, images: … }
+  counters        Json         @default("{}")
+  // Errores y avisos (máx. 300), con la fila del Excel
+  issues          Json         @default("[]")
+  cancelRequested Boolean      @default(false)
+  createdById     String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   finishedAt      DateTime?
 }
 

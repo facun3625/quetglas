@@ -8,7 +8,6 @@ const ACTION_LABELS: Record<string, string> = {
   "category.delete": "Eliminó una categoría",
   "attribute.create": "Creó un atributo",
   "attribute.delete": "Eliminó un atributo",
-  "migration.undo": "Deshizo la migración (borró lo migrado)",
   "user.create_admin": "Creó un administrador",
   "user.make_admin": "Hizo administrador a un usuario",
   "user.reset_password": "Restableció la contraseña de un usuario",
@@ -25,6 +24,7 @@ const ACTION_LABELS: Record<string, string> = {
   "product.create": "Creó un producto",
   "product.update": "Editó un producto",
   "product.delete": "Eliminó un producto",
+  "product.import": "Importó productos desde Excel",
   "theme.save": "Guardó un tema visual",
   "theme.activate": "Activó un tema visual",
   "theme.deactivate": "Desactivó un tema visual",
@@ -39,8 +39,6 @@ const ACTION_LABELS: Record<string, string> = {
   "ai.conversation_delete": "Eliminó una conversación de la vendedora IA",
   "backup.create": "Hizo una copia de seguridad",
   "backup.delete": "Eliminó una copia de seguridad",
-  "migration.start": "Inició la migración desde WooCommerce",
-  "migration.activation_emails": "Envió mails de activación a clientes migrados",
 };
 
 export function adminActionLabel(action: string): string {

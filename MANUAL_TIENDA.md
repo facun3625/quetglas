@@ -586,18 +586,18 @@ Desde **Productos** se administra todo el catálogo:
 
 En **Configuración → General** se elige si toda la tienda trabaja en pesos (ARS) o en dólares (USD). Aplica a precios, carrito, pedidos, mails y estadísticas. No hay conversión: si se cambia, hay que revisar los precios cargados.
 
-### 10.2.2 Migrar desde WooCommerce
+### 10.2.2 Importar productos desde Excel
 
-En **Migración Woo** (solo la ve y la usa el superadministrador) se puede traer una tienda WooCommerce por única vez: categorías, atributos, productos con sus variantes e imágenes y, opcionalmente, clientes. Los pedidos, cupones y reseñas no se migran.
+En **Catálogo → Importar Excel** se cargan productos nuevos y se actualizan los existentes desde una planilla. Arriba está el botón **Descargar plantilla .xlsx**, con filas de ejemplo y una hoja de instrucciones.
 
-1. Generá las claves en WooCommerce → Ajustes → Avanzado → API REST, con permiso de **solo lectura**.
-2. Cargá la URL de la tienda y las dos claves y apretá **Probar conexión y ver vista previa**. Se muestran los conteos de lo que se va a traer.
-3. Elegí si también querés migrar los clientes y apretá **Iniciar migración**. Se ve una barra de progreso y, al terminar, el detalle de nuevos, actualizados, omitidos y con error, más la lista de avisos (por ejemplo imágenes que no se pudieron descargar).
-4. Si se corta o querés repetirla, volvé a ejecutarla: se identifica cada registro por su origen y no se duplica nada. Un producto agrupado o externo, y las variaciones "cualquiera", se omiten con aviso; un SKU repetido se importa sin SKU.
+- **Una fila por producto.** Si tiene variantes (talle, tamaño, color…), una fila por variante, todas con el mismo valor en la columna `grupo`.
+- **SKU obligatorio.** Es la clave: si el SKU ya existe se actualiza, si no se crea. Una fila suelta con el SKU de una variante ya cargada actualiza solo esa variante.
+- **Atributos:** columnas `atributo:Tamaño`, `atributo:Color`, etc. Son opcionales; si el atributo o el valor no existen, se crean.
+- **Imágenes:** links públicos (https://…) o nombres de archivo que se suben en un .zip junto con el Excel. Varias separadas con `|`; la primera es la principal. Al reimportar no se vuelven a subir.
+- **Categorías:** como ruta (`Dermocosmética > Protección solar`), varias separadas con `|`. Las que no existen se crean.
+- **Celdas vacías no borran nada** al actualizar: un Excel con solo `sku` y `precio` cambia precios y deja el resto igual.
 
-Las claves no se guardan: se usan solo mientras corre la migración. Las imágenes se descargan y se guardan en el almacenamiento propio de la tienda.
-
-Los clientes migrados llegan **sin contraseña** (WooCommerce no permite migrarlas). Desde la misma pantalla, **Enviar mails de activación** les manda un enlace de 7 días para crear la suya; también pueden usar **¿Olvidaste tu contraseña?**.
+Al subir el archivo primero se ve una **vista previa** (cuántos productos se crean y se actualizan, y los errores y avisos con su número de fila). Las filas con error no se importan. Al confirmar, la importación corre con barra de progreso y se puede cancelar; lo ya importado queda.
 
 ### 10.3 Estadísticas
 
@@ -629,9 +629,6 @@ En **Categorías** hay un listado en árbol (cada subcategoría debajo de su pad
 
 En **Atributos** hay un listado (nombre, algunos valores, cantidad de valores y de productos que lo usan) con buscador. A la izquierda se **agrega** un atributo nuevo; al entrar a uno (**Configurar valores**) se ve la lista completa de sus valores, paginada y con buscador: se pueden **agregar** varios a la vez (uno por línea, con color opcional como `Rojo|#ff0000`), **editar** el nombre o el color de cada valor y **eliminarlos**. Borrar un valor o un atributo elimina también las variantes que lo usan (se avisa antes).
 
-### 10.4 quater Deshacer la migración
-
-En **Migración Woo**, el superadministrador tiene una **zona de peligro**: *Ver qué se borraría* muestra cuántos productos, imágenes, categorías y atributos migrados hay, y *Borrar todo lo migrado* los elimina (con sus imágenes en R2) para empezar de cero. Hay que escribir BORRAR MIGRACION para confirmar. Solo reconoce lo traído de WooCommerce: lo cargado a mano no se toca, y los clientes migrados que ya compraron o tienen puntos se conservan. No se puede deshacer.
 
 ### 10.4 bis bis Barra superior del panel
 
@@ -809,4 +806,4 @@ La asistente consulta fuentes reales antes de responder sobre productos, stock, 
 
 ### Cómo está ordenado el menú del panel
 
-El menú lateral agrupa las secciones en bloques que se despliegan: **Catálogo** (Productos, Categorías, Atributos, Etiquetas y, solo para el superadministrador, Migración Woo), **Ventas** (suelto), **Estadísticas** (de ventas y Visitas), **Clientes y usuarios** (Clientes, Administradores, Segmentos, Suscriptores, Puntos; *Clientes* y *Administradores* son dos vistas de la misma lista de cuentas), **Tienda** (Pagos, Envíos, Cupones, Temas y campañas, Páginas, Contacto), **Recuperar clientes** (Carritos abandonados, Lista de espera), **Mailing**, **Notificaciones**, **Conversaciones IA** y **Mensajes** (sueltos), **Sistema** (Registro) y **Configuración** (suelta). Al tocar el nombre de un grupo se abre o se cierra; se mantiene abierto uno solo a la vez (al abrir otro, el anterior se cierra), el panel recuerda en ese navegador cuál quedó abierto y abre solo el grupo de la pantalla actual. Los números rojos de Ventas, Conversaciones IA y Mensajes se ven aunque no haya nada desplegado. Abajo del menú están el nombre de quien entró, *Volver al sitio*, *Manual de uso* y *Cerrar sesión*. El buscador del panel (`Ctrl`/`⌘` + `K`) encuentra cualquier sección sin importar el grupo.
+El menú lateral agrupa las secciones en bloques que se despliegan: **Catálogo** (Productos, Categorías, Atributos, Etiquetas e Importar Excel), **Ventas** (suelto), **Estadísticas** (de ventas y Visitas), **Clientes y usuarios** (Clientes, Administradores, Segmentos, Suscriptores, Puntos; *Clientes* y *Administradores* son dos vistas de la misma lista de cuentas), **Tienda** (Pagos, Envíos, Cupones, Temas y campañas, Páginas, Contacto), **Recuperar clientes** (Carritos abandonados, Lista de espera), **Mailing**, **Notificaciones**, **Conversaciones IA** y **Mensajes** (sueltos), **Sistema** (Registro) y **Configuración** (suelta). Al tocar el nombre de un grupo se abre o se cierra; se mantiene abierto uno solo a la vez (al abrir otro, el anterior se cierra), el panel recuerda en ese navegador cuál quedó abierto y abre solo el grupo de la pantalla actual. Los números rojos de Ventas, Conversaciones IA y Mensajes se ven aunque no haya nada desplegado. Abajo del menú están el nombre de quien entró, *Volver al sitio*, *Manual de uso* y *Cerrar sesión*. El buscador del panel (`Ctrl`/`⌘` + `K`) encuentra cualquier sección sin importar el grupo.

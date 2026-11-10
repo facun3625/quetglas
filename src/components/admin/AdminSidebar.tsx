@@ -12,7 +12,7 @@ const LINKS = [
   { href: "/admin/categorias", keywords: "rubros arbol", label: "Categorías", icon: TagIcon },
   { href: "/admin/atributos", keywords: "talles colores variantes", label: "Atributos", icon: ClipboardIcon },
   { href: "/admin/etiquetas", keywords: "marcas nuevo oferta regalo cartelitos", label: "Etiquetas", icon: TagIcon },
-  { href: "/admin/migracion", keywords: "woocommerce woo importar traer", label: "Migración Woo", icon: SendIcon },
+  { href: "/admin/productos/importar", keywords: "excel planilla importar cargar masiva xlsx", label: "Importar Excel", icon: SendIcon },
   { href: "/admin/ventas", keywords: "pedidos ordenes compras ventas rotulo oca seguimiento", label: "Ventas", icon: SalesIcon },
   { href: "/admin/estadisticas", keywords: "reportes informes ingresos metricas", label: "Estadísticas", icon: TrendUpIcon },
   { href: "/admin/visitas", keywords: "trafico analytics", label: "Visitas", icon: EyeIcon },
@@ -43,7 +43,7 @@ type NavEntry = { kind: "link"; href: string } | { kind: "group"; id: string; la
 // Cómo se agrupa el menú. Los ítems sueltos van directo; los grupos se despliegan y se recuerda cuáles quedaron abiertos.
 const TREE: NavEntry[] = [
   { kind: "link", href: "/admin/inicio" },
-  { kind: "group", id: "catalogo", label: "Catálogo", icon: PackageIcon, items: [{ href: "/admin/productos" }, { href: "/admin/categorias" }, { href: "/admin/atributos" }, { href: "/admin/etiquetas" }, { href: "/admin/migracion" }] },
+  { kind: "group", id: "catalogo", label: "Catálogo", icon: PackageIcon, items: [{ href: "/admin/productos" }, { href: "/admin/categorias" }, { href: "/admin/atributos" }, { href: "/admin/etiquetas" }, { href: "/admin/productos/importar" }] },
   { kind: "link", href: "/admin/ventas" },
   { kind: "group", id: "estadisticas", label: "Estadísticas", icon: TrendUpIcon, items: [{ href: "/admin/estadisticas", label: "De ventas" }, { href: "/admin/visitas" }] },
   { kind: "group", id: "clientes", label: "Clientes y usuarios", icon: UsersIcon, items: [{ href: "/admin/usuarios?role=clientes" }, { href: "/admin/usuarios?role=administradores" }, { href: "/admin/segmentos" }, { href: "/admin/suscriptores" }, { href: "/admin/puntos" }] },
@@ -61,7 +61,7 @@ const OPEN_KEY = "admin_nav_group";
 // Sin tildes ni mayúsculas, para que "configuracion" encuentre "Configuración"
 const norm = (v: string) => v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-export function AdminSidebar({ userLabel, logoUrl = "/logo2.png", counts, isSuper = false }: { userLabel: string; logoUrl?: string; isSuper?: boolean; counts?: { newOrders: number; unreadMessages: number; pendingConversations?: number; showMessages?: boolean } }) {
+export function AdminSidebar({ userLabel, logoUrl = "/logo2.png", counts }: { userLabel: string; logoUrl?: string; isSuper?: boolean; counts?: { newOrders: number; unreadMessages: number; pendingConversations?: number; showMessages?: boolean } }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   // Un ítem puede traer filtro en la dirección (?role=…): está activo si coincide la ruta y ese filtro. En /admin/usuarios sin filtro
@@ -69,6 +69,8 @@ export function AdminSidebar({ userLabel, logoUrl = "/logo2.png", counts, isSupe
   const isActiveHref = (href: string) => {
     const [path, query] = href.split("?");
     if (!pathname.startsWith(path)) return false;
+    // Si otro ítem más específico coincide (ej. /admin/productos/importar), el general no se marca
+    if (LINKS.some((l) => l.href.length > path.length && l.href.startsWith(path + "/") && pathname.startsWith(l.href))) return false;
     if (!query) return true;
     const want = new URLSearchParams(query).get("role");
     const have = searchParams.get("role");
@@ -86,7 +88,7 @@ export function AdminSidebar({ userLabel, logoUrl = "/logo2.png", counts, isSupe
 
   // Mensajes solo aparece si existe un formulario de contacto o ya hay mensajes (ver lib/adminCounts.ts)
   const showMessages = counts?.showMessages !== false;
-  const visibleLinks = useMemo(() => LINKS.filter((l) => (l.href !== "/admin/mensajes" || showMessages) && (l.href !== "/admin/migracion" || isSuper)), [showMessages, isSuper]);
+  const visibleLinks = useMemo(() => LINKS.filter((l) => l.href !== "/admin/mensajes" || showMessages), [showMessages]);
 
   // Buscador predictivo del menú: filtra por el nombre de la sección y por palabras relacionadas (ej. "pedidos" → Ventas)
   const matches = useMemo(() => {

@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # Deploy en el VPS. Correr parado en la carpeta del proyecto
-# (~/cortopassi-tienda/cortopassi-tienda) o desde cualquier lado, da igual.
+# (~/quetglas/quetglas) o desde cualquier lado, da igual.
 #
 # Uso:
 #   bash scripts/deploy.sh
 #   npm run deploy          (atajo, ver package.json)
 #
-# Variable opcional PM2_APP para usar otro nombre de proceso pm2 (por defecto "cortopassi"):
+# Variable opcional PM2_APP para usar otro nombre de proceso pm2 (por defecto "quetglas"):
 #   PM2_APP=otro-nombre bash scripts/deploy.sh
 
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PM2_APP="${PM2_APP:-cortopassi}"
+PM2_APP="${PM2_APP:-quetglas}"
 
 cd "$APP_DIR"
 

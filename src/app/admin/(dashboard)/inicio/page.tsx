@@ -371,7 +371,7 @@ export default async function AdminInicioPage() {
             </>
           ) : (
             <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
-              Todavía no hay productos cargados — cargalos desde Productos o migralos desde WooCommerce.
+              Todavía no hay productos cargados — cargalos desde Productos o importalos desde un Excel.
             </p>
           )}
         </div>

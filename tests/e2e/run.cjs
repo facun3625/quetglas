@@ -1,5 +1,5 @@
 // Corre un script e2e (TypeScript) contra una base de datos DESCARTABLE.
-//   DATABASE_URL=postgresql://... node tests/e2e/run.cjs tests/e2e/woo-migration.e2e.ts
+//   DATABASE_URL=postgresql://... node tests/e2e/run.cjs tests/e2e/<archivo>.e2e.ts
 //
 // NUNCA usa la base de DATABASE_URL: toma su servidor, crea (si no existe) una base "<nombre>_e2e",
 // le aplica las migraciones y ejecuta ahí el script. Los scripts pueden vaciar tablas sin tocar tus datos.

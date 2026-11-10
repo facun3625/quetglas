@@ -128,7 +128,7 @@ export default async function AdminProductosPage({
             <Link href="/admin/categorias" className="rounded-lg border border-black/10 px-3 py-2 font-medium text-brand-ink hover:bg-brand-soft">Categorías</Link>
             <Link href="/admin/etiquetas" className="rounded-lg border border-black/10 px-3 py-2 font-medium text-brand-ink hover:bg-brand-soft">Etiquetas</Link>
             <Link href="/admin/atributos" className="rounded-lg border border-black/10 px-3 py-2 font-medium text-brand-ink hover:bg-brand-soft">Atributos</Link>
-            <Link href="/admin/productos/importar" className="rounded-lg border border-black/10 px-3 py-2 font-medium text-brand-ink hover:bg-brand-soft">Precios y stock (CSV)</Link>
+            <Link href="/admin/productos/importar" className="rounded-lg border border-black/10 px-3 py-2 font-medium text-brand-ink hover:bg-brand-soft">Importar Excel</Link>
             <Link href="/admin/productos/nuevo" className="rounded-lg bg-brand-pink px-4 py-2 font-semibold text-white hover:bg-brand-pink-dark">+ Nuevo producto</Link>
           </div>
         </div>

@@ -1,7 +1,7 @@
 # Cortopassi - Tienda
 
 Tienda online con catálogo propio (productos simples y variables, categorías en árbol, atributos),
-checkout con varios medios de pago, panel de administración y migración única desde WooCommerce.
+checkout con varios medios de pago, panel de administración e importación de productos desde Excel.
 
 Next.js 16 · React 19 · Prisma 7 + PostgreSQL · NextAuth · Tailwind 4 · Cloudflare R2 para imágenes.
 
@@ -18,7 +18,7 @@ El primer usuario administrador se crea registrándose en `/registro` y cambiand
 directamente en la base (`UPDATE "User" SET role = 'admin' WHERE email = '...';`). Después se
 administra desde `/admin/usuarios`.
 
-Tests: `node --test tests/` (checkout, imágenes, recuperación de contraseña). Las pruebas de punta a
+Tests: `node --test tests/` (checkout, imágenes, importación por Excel, recuperación de contraseña). Las pruebas de punta a
 punta contra una base real están en `tests/e2e/` (`DATABASE_URL=... node tests/e2e/run.cjs <archivo>`,
 usan una base descartable `<nombre>_e2e` que se crea sola: nunca tocan la tuya).
 
@@ -26,7 +26,7 @@ usan una base descartable `<nombre>_e2e` que se crea sola: nunca tocan la tuya).
 
 1. **Configuración → General**: moneda de la tienda (ARS o USD), contacto y categorías destacadas.
 2. **Pagos** y **Envíos**: activar los medios que se usen.
-3. **Productos**: cargar el catálogo a mano, por CSV, o desde **Migración Woo** si viene de WooCommerce.
+3. **Productos**: cargar el catálogo a mano o desde **Catálogo → Importar Excel** (plantilla en `public/descargas/plantilla-productos.xlsx`).
 4. **Configuración → Correo (SMTP / Resend)**: proveedor de correo, uno de los dos (necesario para recuperar contraseñas). **Configuración → Vendedora IA**: proveedor, modelo y API key de la IA, si se usa.
 
 ## Documentación

@@ -1,7 +1,7 @@
 import { lookup } from "node:dns/promises";
 import net from "node:net";
 
-// Descarga de imágenes remotas (migración desde WooCommerce) con defensas
+// Descarga de imágenes remotas (importación de productos desde Excel) con defensas
 // contra SSRF: solo http(s), sin IPs privadas/locales, tope de tamaño y de
 // tiempo, y los redirects se revalidan uno por uno.
 

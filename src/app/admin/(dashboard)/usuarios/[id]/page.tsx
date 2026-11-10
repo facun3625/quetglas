@@ -31,7 +31,7 @@ export default async function CustomerFichaPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const user = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, name: true, email: true, role: true, phone: true, points: true, createdAt: true, passwordHash: true, wooId: true },
+    select: { id: true, name: true, email: true, role: true, phone: true, points: true, createdAt: true, passwordHash: true },
   });
   // El superadministrador no existe para el administrador de la tienda
   if (!user || (user.role === "superadmin" && (await auth())?.user?.role !== "superadmin")) notFound();
@@ -70,7 +70,6 @@ export default async function CustomerFichaPage({ params }: { params: Promise<{ 
           <h1 className="text-2xl font-bold text-brand-ink">{user.name ?? user.email}</h1>
           <p className="text-sm text-brand-muted">
             {user.email}{user.phone ? ` · ${user.phone}` : ""} · cliente desde {user.createdAt.toLocaleDateString("es-AR")}
-            {user.wooId ? " · migrado desde WooCommerce" : ""}
             {!user.passwordHash ? " · sin contraseña (entra con Google o todavía no la creó)" : ""}
           </p>
         </div>
