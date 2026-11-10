@@ -1,0 +1,1376 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// customer: cliente de la tienda · admin: administrador de la tienda · superadmin: dueño técnico de la instalación
+// (ve todo el panel, crea administradores y no aparece en la lista de usuarios del administrador) ·
+// couponStaff: cuenta genérica de sucursal sin acceso al panel, solo entra a /cupon-rapido a generar
+// cupones de un solo uso para invitar clientes del local a probar la tienda online.
+enum Role {
+  customer
+  admin
+  superadmin
+  couponStaff
+}
+
+model User {
+  id           String  @id @default(cuid())
+  name         String?
+  email        String  @unique
+  // Null para cuentas creadas por Google (no tienen contraseña propia) —
+  // ver el guard en lib/auth.ts que evita loguearse con Credentials en ese caso.
+  passwordHash String?
+  role         Role    @default(customer)
+  // Se guarda solo (nadie lo pide en el registro) la primera vez que un
+  // usuario logueado tipea un teléfono en el checkout — ver
+  // lib/reservations.ts:saveUserPhone. Sirve para poder escribirle por
+  // WhatsApp desde carritos abandonados aunque ese carrito puntual no
+  // haya llegado a cargar el teléfono.
+  phone        String?
+
+  // id del cliente en WooCommerce — solo referencia de la migración (ver lib/woo)
+  wooId Int? @unique
+
+  orders         Order[]
+  abandonedCarts AbandonedCart[]
+
+  // Sistema de puntos de fidelidad — ver PointTransaction y PointReward.
+  points            Int                @default(0)
+  pointTransactions PointTransaction[]
+  redeemedCoupons   Coupon[]
+
+  favorites           Favorite[]
+  passwordResetTokens PasswordResetToken[]
+  addresses           Address[]
+  aiConversations     AiConversation[]
+  pushSubscriptions   PushSubscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Productos que el usuario guardó como favoritos ("corazón" en las cards).
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+// "Avisarme cuando haya stock": se anota gente interesada en un producto
+// agotado. No dispara ningún aviso automático todavía — es solo el
+// listado para que el equipo decida qué hacer (contactar a mano, mailing,
+// etc.) cuando el producto vuelve a tener stock.
+model WaitlistEntry {
+  id           String  @id @default(cuid())
+  productId    String
+  product      Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productName  String
+  categoryName String?
+  name         String
+  phone        String?
+  email        String
+
+  createdAt DateTime @default(now())
+  // Último WhatsApp que el equipo abrió desde el panel para este aviso, y cuántas veces
+  whatsappSentAt DateTime?
+  whatsappCount  Int       @default(0)
+
+  @@unique([productId, email])
+}
+
+// Configuración global del sitio, singleton (siempre id = "global").
+model StoreSettings {
+  id String @id @default("global")
+
+  // Sistema de puntos de fidelidad
+  pointsEnabled  Boolean   @default(false)
+  pointsRatio    Float     @default(0.01) // puntos otorgados por cada $1 de subtotal
+  pointsLastSync DateTime?
+
+  // Apaga el sitio para clientes (ver proxy.ts + /mantenimiento) — los
+  // admins entran igual, tanto al panel como al sitio público normal.
+  maintenanceMode Boolean @default(false)
+
+  // Si está prendido, la tienda pública (grilla y buscador) no muestra
+  // productos con stock 0 en vez de mostrarlos con la etiqueta "Sin stock" +
+  // botón "Avisarme". Apagado por defecto porque el aviso de stock agotado
+  // es una función existente (recupera intención de compra) — esto le da al
+  // admin la opción de ocultarlos directamente si prefiere una vidriera más
+  // "limpia".
+  hideOutOfStock Boolean @default(false)
+
+  // Si está prendido, la tienda pública muestra primero las categorías como
+  // tarjetas (y sus subcategorías, en cascada) antes de llegar a los
+  // productos, en vez del menú lateral fijo con todo el árbol a la vista.
+  // Apagado por defecto para no cambiar la experiencia actual sin que el
+  // admin lo elija.
+  categoryDrilldownEnabled Boolean @default(false)
+
+  // Vendedora virtual. El proveedor se puede cambiar sin alterar el chat ni
+  // las herramientas: el catálogo y el stock reales son los de la base propia.
+  aiAssistantEnabled    Boolean     @default(false)
+  aiProvider            AiProvider?
+  aiApiKey              String?
+  aiModel               String?
+  aiAssistantName       String?
+  aiWelcomeMessage      String?
+  aiInstructions        String?
+  aiHumanHandoffEnabled Boolean     @default(true)
+  aiHumanDays           Int[]       @default([1, 2, 3, 4, 5, 6])
+  aiHumanStartTime      String      @default("09:00")
+  aiHumanEndTime        String      @default("18:00")
+
+  // Moneda de TODA la tienda (precios del catálogo, carrito, checkout y
+  // pedidos). No hay moneda por producto ni conversión.
+  currency Currency @default(ARS)
+
+  // Datos de contacto del sitio (navbar, footer, botón de WhatsApp, sección
+  // "Dónde estamos"). Si quedan en null se usan los valores por defecto de
+  // lib/contact.ts.
+  instagramHandle String?
+  whatsappPhone   String?
+  address         String?
+  contactEmail    String?
+
+  // Textos del marquee (la franja que se desplaza debajo del slider) — uno
+  // por línea, se guardan como un único string separado por saltos de línea.
+  marqueeText String?
+
+  // Categorías elegidas para "Explorá por categoría" y
+  // "Productos destacados" del home — antes vivía hardcodeado en page.tsx.
+  // Vacío = todavía no se cargó ninguna, se usa un default razonable (ver
+  // lib/settings.ts).
+  featuredCategoryIds String[] @default([])
+
+  // Categorías que se muestran primero en /tienda sin filtros, en este orden (incluye subcategorías); después va el
+  // resto. Vacío = la tienda se ordena alfabéticamente. Ver lib/products.ts.
+  shopPriorityCategoryIds String[] @default([])
+
+  // Segundos que el carrito queda abierto después de agregar un producto (0 = no se cierra solo). Ver lib/cart.tsx.
+  cartAutoCloseSeconds Int @default(2)
+
+  // Franja de 3 beneficios debajo del hero (ver BenefitsStrip) — ícono
+  // (clave de components/icons.tsx, ver BENEFIT_ICON_OPTIONS), título y
+  // subtítulo, editables desde /admin/configuracion. Null = se usa el valor
+  // calculado por defecto (descuento en efectivo real, sucursal, dirección)
+  // en vez de forzar a cargar los 9 campos en instalaciones nuevas.
+  benefit1Icon     String?
+  benefit1Title    String?
+  benefit1Subtitle String?
+  benefit2Icon     String?
+  benefit2Title    String?
+  benefit2Subtitle String?
+  benefit3Icon     String?
+  benefit3Title    String?
+  benefit3Subtitle String?
+
+  // Pop-up promocional del sitio público (título + texto enriquecido, mismo
+  // editor que usa Mailing) — ver components/SitePopupModal.tsx. "once" se
+  // controla en el navegador del visitante (localStorage), no por IP: una
+  // IP real se comparte entre varios celulares de un mismo operador y
+  // cambia si el visitante pasa de wifi a datos, así que no sirve para
+  // identificar "ya lo vio".
+  popupEnabled   Boolean        @default(false)
+  popupTitle     String?
+  popupBodyHtml  String?
+  popupScope     PopupScope     @default(all)
+  popupFrequency PopupFrequency @default(once)
+
+  // SEO y etiquetas de seguimiento (Configuración → SEO y etiquetas)
+  seoTitle                  String? // título del sitio en Google y al compartir; vacío = el nombre de la tienda
+  seoDescription            String?
+  seoImageUrl               String? // imagen que se ve al compartir el sitio en redes
+  seoIndexable              Boolean @default(true) // false = se le pide a Google que no indexe el sitio
+  gaMeasurementId           String? // Google Analytics 4: G-XXXXXXXXXX
+  gtmId                     String? // Google Tag Manager: GTM-XXXXXXX
+  metaPixelId               String? // Píxel de Meta (Facebook / Instagram)
+  googleSiteVerification    String? // código de verificación de Google Search Console
+  facebookDomainVerification String? // código de verificación de dominio de Meta
+  customHeadCode            String? // etiquetas propias (meta, link, script); solo las carga el superadmin
+
+  // Nombre y sucursal de la franquicia — para el encabezado del mailing
+  // (ej. "ModaShop" / "Santa Fe"). Pensado para cuando haya más de una
+  // franquicia, cada una con su propia identidad en los mails que manda.
+  franchiseName     String?
+  franchiseLocation String?
+
+  // Proveedor de envío de mails (mailing + confirmación de pedido). Cada
+  // franquicia elige el que tenga: su propio SMTP, o Resend (API). El "from"
+  // (mailFromName/mailFromEmail) es compartido por ambos.
+  mailProvider MailProvider @default(smtp)
+
+  // SMTP para el mailing (ver lib/mailer.ts). La contraseña queda en texto
+  // plano en la base — mismo nivel de exposición que las credenciales de
+  // Mercado Pago en PaymentMethodConfig, nunca se devuelve al cliente.
+  smtpHost      String?
+  smtpPort      Int?
+  smtpSecure    Boolean @default(true)
+  smtpUser      String?
+  smtpPassword  String?
+  mailFromName  String?
+  mailFromEmail String?
+
+  // Resend (https://resend.com) — alternativa al SMTP, solo necesita una
+  // API key. El dominio del mailFromEmail tiene que estar verificado en Resend.
+  resendApiKey String?
+
+  // Cupo mensual de mailing (campañas de /admin/mailing, no los mails
+  // transaccionales de pedido) — muchos proveedores de SMTP/Resend limitan
+  // cuántos mails se pueden mandar por mes. Null = sin límite cargado
+  // todavía. El uso se calcula sumando MailCampaign.sentCount desde el
+  // día 1 del mes en curso — ver lib/mailQuota.ts.
+  mailMonthlyQuota Int?
+
+  // Tope mensual de tokens de la vendedora de IA (null = sin límite). Cuando se agota, el chat se reemplaza por el acceso
+  // directo a WhatsApp hasta el mes siguiente. Ver lib/usage.ts.
+  aiMonthlyTokenQuota Int?
+
+  // Par de claves VAPID para notificaciones push (Web Push nativo, sin
+  // proveedor externo) — se generan una sola vez, solas, la primera vez que
+  // hace falta mandar o suscribir un push (ver lib/webPush.ts). La privada
+  // nunca sale del server; la pública la necesita el browser para
+  // suscribirse y no es secreta.
+  vapidPublicKey  String?
+  vapidPrivateKey String?
+
+  // Aviso por Telegram al equipo cuando entra una venta web (ver
+  // lib/telegram.ts). Vacío hasta que se carga el bot en Configuración —
+  // si falta cualquiera de los dos, simplemente no se manda el aviso.
+  telegramBotToken String?
+  telegramChatId   String?
+
+  // Textos editables del mail "Recibimos tu pedido" que se le manda al
+  // cliente al comprar (ver lib/orderEmails.ts). El detalle de productos y
+  // los totales del pedido NO son editables acá (son datos reales de la
+  // venta) — esto es solo el mensaje alrededor. Vacío = se usa el texto por
+  // defecto. Admiten {nombre} y {pedido} como placeholders.
+  // Mensajes del checkout editables desde el panel. Vacío = texto por defecto (lib/checkoutTexts.ts).
+  checkoutNotice            String? // aviso arriba del checkout (ej. "Envíos a todo el país en 48 hs")
+  successTitle              String?
+  successMessage            String? // mensaje general de "pedido registrado"
+  successMessageTransfer    String?
+  successMessageCash        String?
+  successMessageMercadopago String?
+  successMessagePayway      String?
+  successMessageNoPayment   String?
+
+  // Cloudflare R2 (almacenamiento de imágenes y videos), cargado desde Configuración → Imágenes. Si está completo,
+  // tiene prioridad sobre las variables de entorno R2_*; si no, se usan esas; sin nada, se guarda en el disco local.
+  r2AccountId       String?
+  r2AccessKeyId     String?
+  r2SecretAccessKey String?
+  r2Bucket          String?
+  r2PublicUrl       String?
+
+  // Franja de beneficios del inicio: lista de { icon, title, subtitle } (1 a 6). Si es null se usan los 3 ítems de siempre
+  // (benefit1..3 + valores por defecto).
+  homeBenefits Json?
+
+  // Recuperación automática de carritos por mail (Carritos abandonados). Apagada por defecto.
+  cartRecoveryEnabled    Boolean @default(false)
+  cartRecoveryDelayHours Int     @default(4)
+  cartRecoverySubject    String?
+  cartRecoveryMessage    String?
+
+  // Logos e ícono (URL de imagen subida desde Configuración). Vacío = el logo original de la instalación.
+  logoHeaderUrl String?
+  logoFooterUrl String?
+  faviconUrl    String?
+
+  // Texto corto del pie de página (debajo del logo). Vacío = texto por defecto.
+  footerText String?
+
+  // Secciones del inicio configurables (título editable, se pueden apagar)
+  homeFeaturedEnabled Boolean @default(true)
+  homeFeaturedTitle   String?
+  homeOffersEnabled   Boolean @default(true)
+  homeOffersTitle     String?
+
+  // ---- Envíos (todo con interruptor; el costo real lo calcula el servidor) ----
+  // Envío gratis automático al superar un monto de compra (sobre el subtotal de productos)
+  freeShippingEnabled     Boolean @default(false)
+  freeShippingThreshold   Float   @default(0)
+  // Envío a acordar (el cliente elige y se coordina por WhatsApp) y cadetería local (zonas sin correo)
+  acordarEnabled          Boolean @default(true)
+  cadeteEnabled           Boolean @default(true)
+  cadeteCost              Float   @default(0)
+  // Restricciones y descuentos por código postal
+  zipRestrictionsEnabled  Boolean @default(true)
+  zipDiscountsEnabled     Boolean @default(true)
+  // Valores por defecto para productos sin peso o medidas cargadas
+  shippingDefaultWeightKg Float   @default(1)
+  shippingDefaultDimCm    Float   @default(20)
+  // OCA ePak: cotización, sucursales, registro del envío y rótulo
+  ocaEnabled              Boolean @default(false)
+  ocaCuit                 String?
+  ocaOperativa            String?
+  ocaOperativaSucursal    String?
+  ocaOriginZipCode        String?
+  ocaOriginStreet         String?
+  ocaOriginNumber         String?
+  ocaOriginFloor          String?
+  ocaOriginCity           String?
+  ocaOriginProvince       String?
+  ocaOriginContact        String?
+  ocaOriginEmail          String?
+  ocaFranjaHoraria        String  @default("1")
+  ocaUser                 String?
+  ocaPassword             String?
+  ocaNroCliente           String?
+  // Retiro en sucursal OCA: descuento sobre la tarifa a domicilio (en Araí es 30 %)
+  ocaBranchDiscountPct    Float   @default(30)
+
+  // Mails automáticos al comprador cuando el admin cambia el estado de su pedido. Cada uno se
+  // puede apagar y el texto es editable ({nombre} y {pedido} se reemplazan). Vacío = texto por defecto.
+  statusEmailConfirmedEnabled Boolean @default(true)
+  statusEmailConfirmedText    String?
+  statusEmailDeliveredEnabled Boolean @default(true)
+  statusEmailDeliveredText    String?
+  statusEmailCancelledEnabled Boolean @default(true)
+  statusEmailCancelledText    String?
+
+  orderEmailIntro           String?
+  orderEmailNoteTransfer    String?
+  orderEmailNoteCash        String?
+  orderEmailNoteMercadopago String?
+  orderEmailNotePayway      String?
+  orderEmailNoteNoPayment   String?
+  orderEmailClosing         String?
+
+  updatedAt DateTime @updatedAt
+}
+
+enum MailAudience {
+  abandoned_carts
+  waitlist
+  users
+  subscribers
+}
+
+enum MailCampaignStatus {
+  sending
+  done
+  failed
+}
+
+enum MailProvider {
+  smtp
+  resend
+}
+
+enum PopupScope {
+  home
+  tienda
+  all
+}
+
+enum PopupFrequency {
+  once
+  always
+}
+
+enum AiProvider {
+  openai
+  gemini
+}
+
+enum AiMessageRole {
+  user
+  assistant
+}
+
+// Una conversación por navegador. Guardamos nuestro propio historial para
+// poder cambiar de proveedor sin perder contexto ni depender de IDs externos.
+model AiConversation {
+  id        String      @id @default(cuid())
+  sessionId String      @unique
+  userId    String?
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  // Datos que el cliente deja al abrir el chat, para poder contactarlo si la IA no resuelve la consulta
+  name      String?
+  phone     String?
+  // Cuándo se marcó como atendida (null = pendiente de revisar)
+  handledAt DateTime?
+  // Último mensaje de la conversación (para ordenar la lista del panel)
+  lastMessageAt DateTime @default(now())
+  messages  AiMessage[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AiMessageRole
+  content        String
+  productIds     String[]       @default([])
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// Registro de cada mailing mandado desde /admin/mailing — a qué listas se
+// mandó, cuántos destinatarios tenía y cómo va el envío. El envío en sí
+// pasa en segundo plano (ver actions.ts): esta fila se crea al toque con
+// status "sending" y se va actualizando sentCount a medida que manda.
+model MailCampaign {
+  id             String             @id @default(cuid())
+  subject        String
+  title          String
+  body           String
+  audiences      MailAudience[]
+  // Segmentos de clientes (ver CustomerSegment) a los que también se envía
+  segmentIds     String[]           @default([])
+  recipientCount Int                @default(0)
+  sentCount      Int                @default(0)
+  status         MailCampaignStatus @default(sending)
+
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+}
+
+// Una fila por dispositivo/navegador suscripto a notificaciones push (Web
+// Push nativo, sin proveedor externo) — se crea al aceptar el permiso desde
+// "Descargar Web App" (ver /api/push/subscribe). userId queda null para
+// quien se suscribió sin estar logueado; si estaba logueado, se usa para
+// mandarle el push de "recibimos tu pedido" junto con el mail (ver
+// lib/orderEmails.ts). endpoint es único por navegador/dispositivo — un
+// mismo usuario puede tener varias filas (una por dispositivo).
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum PushCampaignStatus {
+  sending
+  done
+  failed
+}
+
+// Registro de cada push manual mandado desde /admin/notificaciones — mismo
+// patrón que MailCampaign. Sin audiencias: siempre va a todos los
+// suscriptos (la base de push suele ser mucho más chica que la de mail).
+model PushCampaign {
+  id             String             @id @default(cuid())
+  title          String
+  body           String
+  url            String?
+  recipientCount Int                @default(0)
+  sentCount      Int                @default(0)
+  status         PushCampaignStatus @default(sending)
+
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+}
+
+// Slides del carrusel principal del home, editables desde el admin — hasta
+// 3 (ver validación en actions.ts). `title` y `promoText` admiten más de
+// una línea (separadas por \n) para poder partir el texto igual que antes.
+// Los botones son 3 slots fijos en vez de una lista dinámica: alcanza para
+// el caso de uso real (categorías destacadas + "Ver todo") sin necesitar un
+// editor de lista en el admin.
+model HeroSlide {
+  id       String  @id @default(cuid())
+  position Int     @default(0)
+  enabled  Boolean @default(true)
+
+  imageUrl  String?
+  promoText String? // texto del círculo/badge, ej. "Nueva\nColección"
+  eyebrow   String
+  title     String
+  subtitle  String?
+
+  button1Label String?
+  button1Href  String?
+  button2Label String?
+  button2Href  String?
+  button3Label String?
+  button3Href  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Catálogo de recompensas canjeables por puntos, editable desde el admin. Al
+// canjearse (ver lib/points.ts) no se descuenta nada acá — se genera un
+// Coupon de un solo uso con este mismo tipo/valor de descuento.
+model PointReward {
+  id             String       @id @default(cuid())
+  title          String
+  pointsRequired Int
+  discountType   DiscountType
+  discountValue  Float
+  enabled        Boolean      @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Historial de movimientos de puntos de cada usuario. El signo de `amount`
+// es lo único que distingue un ingreso (ganado por compra) de un egreso
+// (canjeado por una recompensa) — no hay un campo `type` separado.
+model PointTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId     String? // solo presente cuando amount > 0 (puntos ganados por ese pedido)
+  amount      Int
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  delivered
+  cancelled
+}
+
+// Registro de auditoría: cada acción que hace un admin desde el panel
+// (confirmar/cancelar/eliminar pedidos, cambiar roles, etc.) queda acá.
+model AdminLog {
+  id         String   @id @default(cuid())
+  adminId    String?
+  adminEmail String
+  action     String // código de la acción, ej: "order.delete"
+  targetType String? // ej: "order", "user"
+  targetId   String?
+  detail     String? // texto legible para mostrar en la lista
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+enum PaymentMethod {
+  mercadopago
+  transferencia
+  contra_entrega
+  payway
+  // Pedido sin pago online: se registra igual y se coordina por WhatsApp o email
+  sin_pago
+}
+
+// Configuración de cada medio de pago, editable desde el admin (Pagos) en
+// vez de hardcodeada — incluye si está habilitado, un descuento opcional, y
+// (solo para mercadopago) las credenciales de la cuenta.
+model PaymentMethodConfig {
+  id          String        @id @default(cuid())
+  method      PaymentMethod @unique
+  enabled     Boolean       @default(false)
+  discountPct Float         @default(0)
+  // Modalidades de envío de la tienda (oca_domicilio, oca_sucursal, acordar) permitidas con este medio de pago.
+  // Junto con PaymentMethodShipping: si no hay nada marcado, acepta cualquier envío habilitado.
+  allowedShippingCodes String[] @default([])
+
+  // Solo aplica a method = mercadopago
+  mpAccessToken   String?
+  mpPublicKey     String?
+  // Clave secreta de las notificaciones (webhooks) de Mercado Pago, para validar la firma
+  mpWebhookSecret String?
+
+  // Solo aplica a method = payway (gateway Decidir/Payway — ver
+  // lib/payway.ts). La public key se expone al cliente para tokenizar la
+  // tarjeta (decidir.js); la private key SOLO se usa server-side para
+  // cobrar, nunca se devuelve. paywaySandbox switchea entre el ambiente de
+  // pruebas y el de producción de la API.
+  paywayPublicKey  String?
+  paywayPrivateKey String?
+  paywaySandbox    Boolean @default(true)
+
+  // Solo aplica a method = transferencia — datos que se le muestran al
+  // cliente en el checkout para que sepa a dónde transferir. No son
+  // secretos (a diferencia de las credenciales de MP), se devuelven tal cual.
+  bankCbu        String?
+  bankAlias      String?
+  bankHolderName String?
+
+  // Solo aplica a method = sin_pago: el pedido entra al panel igual y se coordina por fuera.
+  // Se puede ofrecer un botón de WhatsApp al cliente, avisar por mail a la tienda y mostrar instrucciones.
+  noPaymentWhatsapp     Boolean @default(true)
+  noPaymentEmail        Boolean @default(true)
+  noPaymentInstructions String?
+
+  // Si no tiene ninguna fila acá, el medio de pago acepta cualquier envío
+  // habilitado. Si tiene una o más, queda restringido a esos.
+  allowedShipping PaymentMethodShipping[]
+
+  // Excepciones de descuento por categoría (ver PaymentMethodCategoryDiscount)
+  // — si un ítem no matchea ninguna, se le aplica el discountPct de arriba.
+  categoryDiscounts PaymentMethodCategoryDiscount[]
+
+  updatedAt DateTime @updatedAt
+}
+
+// Excepción al discountPct plano de PaymentMethodConfig para una categoría
+// puntual (y sus subcategorías) — ej. "efectivo: 20% en Bijouterie, 10% en
+// el resto de la tienda". Si una categoría y alguna de sus categorías
+// ancestro tienen las dos una excepción cargada, gana la más específica (ver
+// lib/paymentMethodDiscount.ts).
+model PaymentMethodCategoryDiscount {
+  id                    String              @id @default(cuid())
+  paymentMethodConfigId String
+  paymentMethodConfig   PaymentMethodConfig @relation(fields: [paymentMethodConfigId], references: [id], onDelete: Cascade)
+  categoryId            String
+  category              Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  discountPct           Float
+
+  @@unique([paymentMethodConfigId, categoryId])
+}
+
+// Métodos de envío: totalmente a cargo del admin (crear/editar/deshabilitar),
+// pensado para poder tener varios distintos (a futuro, por franquicia).
+model ShippingMethod {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  cost        Float   @default(0)
+  enabled     Boolean @default(true)
+
+  // Si es false, el checkout no pide dirección (ej. "Retiro en el local").
+  requiresAddress Boolean @default(true)
+
+  allowedForPayments PaymentMethodShipping[]
+  orders             Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Tabla puente: qué métodos de envío acepta cada medio de pago. Ausencia de
+// filas para un medio de pago = sin restricción (acepta todos los envíos
+// habilitados).
+model PaymentMethodShipping {
+  id                    String              @id @default(cuid())
+  paymentMethodConfigId String
+  paymentMethodConfig   PaymentMethodConfig @relation(fields: [paymentMethodConfigId], references: [id], onDelete: Cascade)
+  shippingMethodId      String
+  shippingMethod        ShippingMethod      @relation(fields: [shippingMethodId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentMethodConfigId, shippingMethodId])
+}
+
+enum DiscountType {
+  percentage
+  fixed
+  // Cupón de envío gratis (el descuento va sobre el costo de envío, no sobre los productos)
+  free_shipping
+}
+
+// Cupones de descuento, creados desde el admin. Todo el alcance es opcional
+// y se combina con AND: si no se carga ninguna condición, aplica a
+// cualquier compra. El descuento se calcula sobre el subtotal completo del
+// pedido (no solo sobre los ítems que matchean categoría/producto) una vez
+// que se cumplen las condiciones de alcance.
+model Coupon {
+  id      String  @id @default(cuid())
+  code    String  @unique
+  enabled Boolean @default(true)
+
+  discountType  DiscountType
+  discountValue Float // % (0-100) si es percentage, o $ si es fixed
+
+  // Alcance — todo opcional
+  categoryId        String?
+  category          Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  productId         String?
+  product           Product?           @relation(fields: [productId], references: [id], onDelete: SetNull)
+  paymentMethod     PaymentMethod?
+  minPurchaseAmount Float?
+  // Vigencia: aplica desde startsAt (vacío = ya) hasta expiresAt
+  startsAt          DateTime?
+  expiresAt         DateTime?
+  maxUses           Int?
+  // Cada cliente (cuenta o email) puede usarlo una sola vez
+  oneUsePerCustomer Boolean            @default(false)
+  redemptions       CouponRedemption[]
+  usedCount         Int                @default(0)
+
+  // Solo presente en cupones generados por un canje de puntos (código con
+  // prefijo "CANJE-"): quedan atados a ese usuario y son de un solo uso (se
+  // deshabilitan solos al usarse, ver lib/coupons.ts).
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Una fila por carga de página del sitio público (nunca /admin). sessionId
+// es el mismo id anónimo persistente que ya usa el carrito (lib/cartSession),
+// reutilizado acá para poder contar "visitas" (sesiones distintas) además de
+// "vistas de página" (filas) sin inventar un segundo mecanismo de sesión.
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  sessionId String
+  createdAt DateTime @default(now())
+  // Origen de la visita: solo se completa en la primera página de cada sesión del navegador ("llegada").
+  // channel: instagram, facebook, whatsapp, tiktok, youtube, x, pinterest, linkedin, google, buscadores, email, push, otro, sitio, directo
+  isLanding    Boolean @default(false)
+  channel      String?
+  paid         Boolean @default(false) // llegó desde un anuncio (por los UTM del link o el identificador de Google Ads)
+  campaign     String? // utm_campaign
+  referrerHost String? // sitio desde el que llegó, cuando no es una red conocida
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([isLanding, createdAt])
+}
+
+// Foto del último estado de cada carrito, sincronizada sola en cada cambio
+// (agregar/sacar/cambiar cantidad) — no hay un "detector de abandono", es
+// simplemente el último snapshot conocido de ese sessionId. Se borra en
+// cuanto el carrito queda vacío (ya sea porque el cliente lo vació a mano o
+// porque compró y se limpió el carrito), así nunca queda un carrito
+// "abandonado" que en realidad terminó en una venta.
+model AbandonedCart {
+  id         String   @id @default(cuid())
+  sessionId  String   @unique
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  email      String?
+  name       String?
+  phone      String? // tomado del formulario de checkout — útil para contactar por WhatsApp
+  items      Json
+  total      Float
+  lastActive DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  // Cuándo se le mandó el mail automático de recuperación (null = nunca)
+  recoveryEmailSentAt DateTime?
+  // Último WhatsApp que el equipo abrió desde el panel para este carrito, y cuántas veces (null / 0 = nunca)
+  whatsappSentAt DateTime?
+  whatsappCount  Int       @default(0)
+}
+
+// Personas que pidieron no recibir más recordatorios de carrito (link de baja del mail)
+model CartRecoveryOptOut {
+  email     String   @id
+  createdAt DateTime @default(now())
+}
+
+// Registro de ventas online: única fuente de verdad de los pedidos hechos
+// desde la tienda. El stock se descuenta de la base propia al confirmar el
+// pago y se repone si el pedido se cancela (ver lib/stock.ts).
+//
+// status refleja el estado del pedido: pending = pedido creado, pago sin confirmar todavía
+// (transferencia/contra-entrega); confirmed = pago confirmado (a mano por el
+// equipo, o automático si viene de Mercado Pago); cancelled = nunca pagó.
+model Order {
+  id            String        @id @default(cuid())
+  // Cuándo lo vio un administrador por primera vez (null = pedido nuevo, sin ver). Alimenta la campanita y el número de Ventas.
+  adminSeenAt   DateTime?
+  // Número correlativo visible (#0001, #0002...) — el id interno es un código largo
+  number        Int           @unique @default(autoincrement())
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  subtotal      Float         @default(0) // suma de items sin envío ni descuentos — base para los puntos ganados
+  total         Float
+  status        OrderStatus   @default(pending)
+  paymentMethod PaymentMethod
+
+  shippingMethodId String?
+  shippingMethod   ShippingMethod? @relation(fields: [shippingMethodId], references: [id])
+  shippingCost     Float           @default(0)
+  shippingAddress  String?
+
+  couponId       String?
+  coupon         Coupon? @relation(fields: [couponId], references: [id])
+  couponDiscount Float   @default(0)
+
+  // Moneda en la que se cobró (la de la tienda al momento de la compra)
+  currency Currency @default(ARS)
+
+  // Si el stock de este pedido ya se descontó (evita descontar dos veces
+  // o reponer algo que nunca se descontó) — ver lib/stock.ts.
+  stockDeductedAt DateTime?
+
+  // id del pago en Payway/Decidir (solo paymentMethod = payway) — para
+  // referencia/reembolsos desde el admin. El pago ya está aprobado cuando
+  // se crea el pedido (cobro síncrono), a diferencia de transferencia.
+  paywayPaymentId Int?
+
+  // Ídem para Mercado Pago (solo paymentMethod = mercadopago) — mismo
+  // patrón: cobro síncrono, tarjeta únicamente (nunca efectivo).
+  mercadopagoPaymentId Int?
+
+  // Momento en que se acreditaron los puntos de este pedido (ver
+  // lib/points.ts) — null hasta que el pedido se marca como entregado. Solo aplica a pedidos con userId (invitados no ganan puntos).
+  pointsAwardedAt DateTime?
+
+  // Envío: copia de lo elegido al comprar. shippingMethodId solo aplica a los métodos propios; los dinámicos
+  // (oca_domicilio, oca_sucursal, acordar, cadete) se identifican por shippingCode.
+  shippingCode     String?
+  shippingName     String?
+  // Dirección estructurada: { street, number, apartment, city, province, zipCode, branchId, branchName, isBranch }
+  shippingData     Json?
+  contactFirstName String?
+  contactLastName  String?
+  contactDni       String?
+  // Descuento aplicado por código postal de la zona de envío
+  zipDiscount      Float     @default(0)
+  // OCA: número de orden de retiro (seguimiento) y cuándo se registró el envío
+  trackingNumber   String?
+  trackingCarrier  String?
+  ocaRegisteredAt  DateTime?
+
+  // Comprobante adjuntado por el cliente (solo transferencia)
+  transferProofUrl String?
+
+  // Cuándo se mandaron los avisos de venta nueva (mail al cliente + Telegram). Evita duplicarlos
+  // cuando un pago incierto se resuelve después por webhook.
+  noticesSentAt DateTime?
+
+  events OrderEvent[]
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Referencias al catálogo (null si el producto/variante se borró después:
+  // el pedido conserva su copia en name/sku/price).
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId String?
+  variant   Variant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  sku       String?
+  name      String
+  price     Float
+  quantity  Int
+  // Peso (kg) y medidas (cm) del artículo al comprar: es lo que se declara al correo
+  weight    Float?
+  width     Float?
+  height    Float?
+  length    Float?
+}
+
+enum Currency {
+  ARS
+  USD
+}
+
+enum ProductType {
+  simple
+  variable
+}
+
+enum ProductStatus {
+  published
+  draft
+}
+
+// Árbol de categorías de profundidad ilimitada (parentId).
+model Category {
+  id             String     @id @default(cuid())
+  name           String
+  slug           String     @unique
+  description    String?
+  // Cartel (texto enriquecido) que se muestra en vez de la grilla cuando la categoría
+  // todavía no tiene productos — mientras tenga esto cargado, cuenta como "con contenido"
+  // para aparecer en el menú/inicio igual que si tuviera productos (ver getAllCategories
+  // y el armado de `counts` en ShopView).
+  comingSoonMessage String?
+  imageUrl       String?
+  parentId       String?
+  parent         Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children       Category[] @relation("CategoryTree")
+  sortOrder      Int        @default(0)
+  seoTitle       String?
+  seoDescription String?
+
+  // Referencia de la migración desde WooCommerce
+  wooId Int? @unique
+
+  products         ProductCategory[]
+  coupons          Coupon[]
+  paymentDiscounts PaymentMethodCategoryDiscount[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+}
+
+model Product {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  sku              String?       @unique
+  type             ProductType   @default(simple)
+  status           ProductStatus @default(published)
+  shortDescription String?
+  description      String?
+  videoUrl         String?
+
+  // Para productos simples. En los variables el precio/stock viven en cada
+  // Variant (price = precio "desde" para mostrar en listados).
+  price          Float   @default(0)
+  compareAtPrice Float?
+  stock          Int     @default(0)
+  // Si es false no se descuenta ni se valida stock (productos a pedido)
+  manageStock    Boolean @default(true)
+
+  // Envío
+  weight Float?
+  width  Float?
+  height Float?
+  length Float?
+
+  featured Boolean @default(false)
+
+  // Precio de costo (solo para el admin: margen y reportes)
+  costPrice Float?
+
+  // Programación de visibilidad: el producto publicado se muestra desde publishAt hasta unpublishAt
+  publishAt   DateTime?
+  unpublishAt DateTime?
+
+  // Precio promocional programable: se aplica entre promoStartsAt y promoEndsAt (vacíos = sin límite)
+  promoPrice     Float?
+  promoStartsAt  DateTime?
+  promoEndsAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+
+  // Referencia de la migración desde WooCommerce
+  wooId Int? @unique
+
+  images     ProductImage[]
+  categories ProductCategory[]
+  tags       ProductTag[]
+  related    ProductRelation[]  @relation("RelatedFrom")
+  relatedTo  ProductRelation[]  @relation("RelatedTo")
+  attributes ProductAttribute[]
+  variants   Variant[]
+  favorites  Favorite[]
+  waitlist   WaitlistEntry[]
+  coupons    Coupon[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([featured])
+}
+
+// Imágenes alojadas en Cloudflare R2 (url pública + miniatura).
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  thumbUrl  String?
+  alt       String?
+  sortOrder Int     @default(0)
+  // Si este lugar de la galería es un video: url/thumbUrl son su portada (un cuadro del video) y videoUrl el archivo.
+  // Todo lo que usa la imagen (listados, carrito, mails, vista previa) sigue usando la portada sin enterarse.
+  videoUrl  String?
+  // Referencia a la imagen original (Woo) para no re-subirla si se reintenta la migración
+  sourceUrl String?
+
+  variants Variant[]
+
+  @@index([productId, sortOrder])
+}
+
+model ProductCategory {
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId])
+}
+
+// Atributo global reutilizable (Talle, Color...) con sus términos.
+model Attribute {
+  id        String             @id @default(cuid())
+  name      String
+  slug      String             @unique
+  sortOrder Int                @default(0)
+  terms     AttributeTerm[]
+  products  ProductAttribute[]
+
+  wooId Int? @unique
+}
+
+model AttributeTerm {
+  id          String    @id @default(cuid())
+  attributeId String
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String
+  // Valor visual opcional (ej. hex de un color)
+  colorHex    String?
+  sortOrder   Int       @default(0)
+
+  variantValues VariantAttributeTerm[]
+
+  @@unique([attributeId, slug])
+}
+
+// Atributo usado por un producto; si usedForVariations, define las combinaciones.
+model ProductAttribute {
+  id                String    @id @default(cuid())
+  productId         String
+  product           Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeId       String
+  attribute         Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  usedForVariations Boolean   @default(true)
+  visible           Boolean   @default(true)
+  sortOrder         Int       @default(0)
+
+  @@unique([productId, attributeId])
+}
+
+model Variant {
+  id             String        @id @default(cuid())
+  productId      String
+  product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku            String?       @unique
+  price          Float         @default(0)
+  compareAtPrice Float?
+  costPrice      Float?
+  // Precio promocional de la variante (usa la ventana de fechas del producto)
+  promoPrice     Float?
+  stock          Int           @default(0)
+  manageStock    Boolean       @default(true)
+  enabled        Boolean       @default(true)
+  weight         Float?
+  width          Float?
+  height         Float?
+  length         Float?
+  imageId        String?
+  image          ProductImage? @relation(fields: [imageId], references: [id], onDelete: SetNull)
+
+  terms      VariantAttributeTerm[]
+  orderItems OrderItem[]
+
+  // Referencia de la migración desde WooCommerce
+  wooId Int? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model VariantAttributeTerm {
+  variantId String
+  variant   Variant       @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  termId    String
+  term      AttributeTerm @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, termId])
+}
+
+// Token de un solo uso para crear/restablecer la contraseña (se guarda el hash
+// SHA-256, nunca el token). También lo usan los clientes migrados desde
+// WooCommerce, que llegan sin contraseña.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+enum MigrationStatus {
+  running
+  done
+  failed
+  cancelled
+}
+
+// Una corrida del migrador de WooCommerce. Las credenciales NO se guardan: viven
+// solo en memoria durante la corrida. Cada corrida es idempotente (upsert por wooId).
+model MigrationJob {
+  id              String          @id @default(cuid())
+  source          String          @default("woocommerce")
+  sourceUrl       String
+  status          MigrationStatus @default(running)
+  options         Json
+  // { step, label, done, total } del paso actual
+  progress        Json            @default("{}")
+  // { categories: {created, updated, skipped, failed}, ... }
+  counters        Json            @default("{}")
+  // Errores y avisos (máx. 200)
+  issues          Json            @default("[]")
+  cancelRequested Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  finishedAt      DateTime?
+}
+
+// Historial de cada pedido: cambios de estado, pagos, conciliaciones, notas internas y avisos.
+model OrderEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  // status | payment | note | email | system
+  type      String
+  message   String
+  // Quién lo hizo: nombre del admin, "Cliente", "Mercado Pago", "Sistema"
+  actor     String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+// Páginas editables desde el panel: institucionales (quiénes somos, contacto) y legales
+// (términos, privacidad, cambios y devoluciones, envíos). Se ven en /pagina/<slug>.
+model Page {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  // HTML del editor (se sanea al guardar y al mostrar)
+  content         String   @default("")
+  enabled         Boolean  @default(true)
+  showInFooter    Boolean  @default(true)
+  // Aparece en el menú de arriba de la tienda (si está publicada)
+  showInMenu      Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  seoDescription  String?
+  // Páginas con formulario de contacto
+  showContactForm Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Mensajes enviados desde el formulario de contacto del sitio
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read, createdAt])
+}
+
+enum SegmentType {
+  new_customers
+  frequent
+  high_spend
+  inactive
+  never_purchased
+  with_points
+  from_coupon
+}
+
+// Segmentos de clientes configurables desde el panel (se usan para filtrar clientes y para campañas de mail).
+// params: { days?, minOrders?, minSpent?, minPoints?, couponId? } según el tipo (ver lib/segments.ts).
+model CustomerSegment {
+  id        String      @id @default(cuid())
+  name      String
+  type      SegmentType
+  params    Json        @default("{}")
+  enabled   Boolean     @default(true)
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now())
+}
+
+// Etiquetas libres para agrupar productos (ej. "nuevo", "regalo", "verano")
+model Tag {
+  id        String       @id @default(cuid())
+  name      String
+  slug      String       @unique
+  sortOrder Int          @default(0)
+  products  ProductTag[]
+}
+
+model ProductTag {
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([productId, tagId])
+  @@index([tagId])
+}
+
+// Productos recomendados elegidos a mano ("También te puede interesar")
+model ProductRelation {
+  productId String
+  product   Product @relation("RelatedFrom", fields: [productId], references: [id], onDelete: Cascade)
+  relatedId String
+  related   Product @relation("RelatedTo", fields: [relatedId], references: [id], onDelete: Cascade)
+  sortOrder Int     @default(0)
+
+  @@id([productId, relatedId])
+}
+
+// Quién usó cada cupón (para los de "uso único por cliente"). customerKey = id de cuenta o email en minúsculas.
+model CouponRedemption {
+  id          String   @id @default(cuid())
+  couponId    String
+  coupon      Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  customerKey String
+  orderId     String?
+  createdAt   DateTime @default(now())
+
+  @@unique([couponId, customerKey])
+  @@index([orderId])
+}
+
+// Búsquedas hechas en la tienda (texto buscado y cuántos resultados dio), para saber qué buscan los clientes
+// y qué buscan sin encontrar.
+model SearchQuery {
+  id           String   @id @default(cuid())
+  term         String
+  resultsCount Int
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([term])
+}
+
+// Hitos del embudo de compra por sesión (una fila por sesión y tipo): "cart" = armó un carrito.
+model FunnelEvent {
+  id        String   @id @default(cuid())
+  sessionId String
+  type      String
+  createdAt DateTime @default(now())
+
+  @@unique([sessionId, type])
+  @@index([createdAt])
+}
+
+// Temas visuales para campañas (Navidad, Black Friday, Hot Sale...). Un tema "aplica" cuando está activado y hoy
+// cae dentro de su ventana de fechas (vacías = sin límite). Si aplican varios, gana el que empezó más reciente.
+// config: paleta, tipografía de títulos, estilo de botones, fondo, barra de anuncio, portada y banners
+// (ver lib/themes.ts, que valida y sanea todo antes de guardarlo y de usarlo).
+model Theme {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  enabled     Boolean   @default(false)
+  // Aspecto base de la tienda: se usa cuando no hay ninguna campaña vigente. Siempre vale, sin fechas.
+  isBase      Boolean   @default(false)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  config      Json      @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum ZipRestrictionType {
+  // No se vende a este código postal (se invita a visitar un local)
+  block_sale
+  // Se vende pero no por correo: se ofrece cadetería local
+  block_shipping
+}
+
+// Zonas restringidas por código postal, con el mensaje (y local/teléfono) que ve el cliente
+model ZipCodeRestriction {
+  id        String             @id @default(cuid())
+  zipCode   String
+  type      ZipRestrictionType
+  message   String?
+  address   String?
+  phone     String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([zipCode, type])
+}
+
+// Descuento automático sobre los productos para un código postal (se suma al del cupón)
+model ZipCodeDiscount {
+  id            String       @id @default(cuid())
+  zipCode       String       @unique
+  discountType  DiscountType
+  discountValue Float
+  label         String?
+  enabled       Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+// Direcciones guardadas de los clientes con cuenta
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  street    String
+  number    String
+  apartment String?
+  city      String
+  province  String
+  zipCode   String
+  phone     String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Tarjetas de la sección "Datos de contacto" (abajo en el sitio): una por local, rubro o sucursal
+model ContactCard {
+  id        String   @id @default(cuid())
+  title     String
+  address   String?
+  phone     String?
+  whatsapp  String?
+  instagram String?
+  position  Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Consumo del mes de lo que tiene cupo: mails enviados ("mail") y tokens de la IA ("ai_tokens"). month = "AAAA-MM" en
+// hora de Argentina. Se suma de a poco con cada envío o respuesta (ver lib/usage.ts).
+model MonthlyUsage {
+  month  String
+  kind   String
+  amount Int    @default(0)
+
+  @@id([month, kind])
+}

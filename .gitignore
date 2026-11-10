@@ -1,0 +1,28 @@
+# dependencias
+node_modules/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# entorno (secretos)
+.env
+.env*.local
+.env.production
+
+# prisma client generado (se regenera con `prisma generate`)
+src/generated/
+
+# imágenes subidas en desarrollo (en producción van a R2)
+public/uploads/
+
+# backups locales
+backups/
+
+# sistema / editores
+.DS_Store
+*.log
+.vscode/
+.idea/

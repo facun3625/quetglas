@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #383e45;
+
+  --color-brand-pink: #e52327;
+  --color-brand-pink-dark: #c4161a;
+  --color-brand-ink: #383e45;
+  --color-brand-muted: #685563;
+  --color-brand-soft: #f6f6f6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-pink: var(--color-brand-pink);
+  --color-brand-pink-dark: var(--color-brand-pink-dark);
+  --color-brand-ink: var(--color-brand-ink);
+  --color-brand-muted: var(--color-brand-muted);
+  --color-brand-soft: var(--color-brand-soft);
+  --font-sans: var(--font-poppins);
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  min-width: 0;
+  overflow-x: clip;
+}
+
+@media (max-width: 639px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 45s linear infinite;
+}
+
+/* Flechita nativa del <select> reemplazada por una propia con más aire —
+   la de cada navegador se pega demasiado al borde y queda encimada con el
+   texto cuando el campo no es muy ancho. */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23685563' stroke-width='2'><path stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.25rem !important;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
+/* Tailwind v4 saca el cursor "pointer" por defecto de los <button> (a
+   diferencia del comportamiento nativo del navegador) — sin esto, cada
+   botón nuevo necesitaría acordarse de agregar cursor-pointer a mano. Los
+   deshabilitados quedan afuera: su cursor lo maneja disabled:cursor-* en
+   cada componente, que tiene más especificidad que esta regla. */
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
+/* Mac usa un scrollbar fino translúcido por defecto, pero Windows/Linux
+   muestran el clásico gris y grueso — se nota sobre todo en listas cortas
+   como el menú del admin. Esto lo afina en todos lados sin depender del SO. */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-brand-muted) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-brand-muted);
+  border-radius: 9999px;
+}
+
+/* Igual, pero pensado para superficies oscuras (ej. el sidebar del admin) —
+   el thumb gris de arriba casi no se distingue sobre bg-brand-ink. */
+.scrollbar-thin-dark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+}
+
+/* El panel de administración no toma los temas de campaña (tipografía de títulos ni forma de botones) */
+.admin-root :is(h1, h2, h3) {
+  font-family: var(--font-poppins), system-ui, sans-serif;
+}
+
+.admin-root :is(a, button).rounded-full:where(.bg-brand-pink, .border-brand-pink) {
+  border-radius: 9999px;
+}
+
+/* Contenido con formato (editor de texto, descripciones de productos, páginas): listas, títulos, citas, etc. */
+.rich-content { line-height: 1.65; }
+.rich-content p { margin: 0 0 0.75em; }
+.rich-content h1, .rich-content h2 { font-size: 1.35em; font-weight: 700; margin: 1em 0 0.4em; line-height: 1.25; }
+.rich-content h3, .rich-content h4 { font-size: 1.12em; font-weight: 700; margin: 0.9em 0 0.35em; line-height: 1.3; }
+.rich-content ul { list-style: disc; padding-left: 1.4em; margin: 0 0 0.75em; }
+.rich-content ol { list-style: decimal; padding-left: 1.4em; margin: 0 0 0.75em; }
+.rich-content li { margin: 0.2em 0; }
+.rich-content blockquote { border-left: 3px solid var(--color-brand-pink); margin: 0.9em 0; padding: 0.2em 0 0.2em 1em; color: var(--color-brand-muted); }
+.rich-content hr { border: 0; border-top: 1px solid rgba(0, 0, 0, 0.15); margin: 1.2em 0; }
+/* !important porque el link puede traer su propio color/subrayado inline (elegido a mano en
+   el editor, o un <u> anidado si además se marcó "Subrayado") — acá siempre gana "sin subrayado". */
+.rich-content a, .rich-content a * { text-decoration: none !important; }
+.rich-content a { color: var(--color-brand-pink-dark); }
+.rich-content a:hover, .rich-content a:hover * { text-decoration: underline !important; }
+.rich-content img { max-width: 100%; height: auto; border-radius: 0.5rem; }
+.rich-content table { border-collapse: collapse; margin: 0.75em 0; max-width: 100%; }
+.rich-content th, .rich-content td { border: 1px solid rgba(0, 0, 0, 0.15); padding: 0.35em 0.6em; }
+.rich-content b, .rich-content strong { font-weight: 700; }
+
+/* Panel de administración: tipografía Montserrat, texto negro, peso liviano y tamaños más chicos, para un aspecto sobrio y elegante.
+   Las clases de Tailwind se "bajan un escalón" solo dentro del panel (medium → regular, semibold → medium, bold → semibold);
+   la tienda pública no cambia. */
+.admin-panel {
+  --color-brand-pink: #551751;
+  --color-brand-pink-dark: #3f103c;
+  --color-brand-ink: #0a0a0a;
+  --color-brand-muted: #3a3a3a;
+  font-family: var(--font-montserrat), system-ui, sans-serif;
+  color: #0a0a0a;
+  font-size: 13px;
+}
+.admin-panel * {
+  font-family: inherit;
+}
+.admin-panel .font-medium { font-weight: 400; }
+.admin-panel .font-semibold { font-weight: 500; }
+.admin-panel .font-bold,
+.admin-panel .font-extrabold { font-weight: 600; }
+.admin-panel .text-xs { font-size: 11px; line-height: 1.4; }
+.admin-panel .text-sm { font-size: 12.5px; line-height: 1.45; }
+.admin-panel .text-base { font-size: 13.5px; line-height: 1.5; }
+.admin-panel .text-lg { font-size: 15px; }
+.admin-panel .text-xl { font-size: 17px; }
+.admin-panel .text-2xl { font-size: 21px; }
+.admin-panel .text-3xl { font-size: 24px; }
+
+/* Sin el anillo azul del navegador al hacer clic; con teclado, un anillo de la marca. Va en la capa "base" para que los
+   campos que ya se dibujan su propio foco (focus:outline-none, focus-within) no muestren un segundo recuadro encima. */
+@layer base {
+  .admin-panel :focus:not(:focus-visible) {
+    outline: none;
+  }
+  .admin-panel :focus-visible {
+    outline: 2px solid var(--color-brand-pink);
+    outline-offset: 2px;
+  }
+}
