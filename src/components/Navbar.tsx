@@ -167,12 +167,12 @@ export function Navbar({ settings }: { settings: SiteSettings }) {
             )}
           </button>
 
-          <Link href="/" className="min-w-0 shrink">
+          <Link href="/" className="min-w-0 shrink lg:shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={settings.logos.header} alt={settings.franchiseName} className="h-10 w-auto max-w-[100px] object-contain sm:h-16 sm:max-w-none lg:h-12 xl:h-16" />
           </Link>
 
-          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-4 lg:flex xl:gap-6 2xl:gap-8">
+          <nav className="hidden min-w-0 flex-1 items-center justify-center-safe gap-4 lg:flex xl:gap-6">
             {DESKTOP_LINKS.map((link) => {
               const active = isActive(link.href);
               const isTienda = link.href === "/tienda";
@@ -220,7 +220,7 @@ export function Navbar({ settings }: { settings: SiteSettings }) {
           <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-1 sm:gap-3 lg:flex-none">
             {/* En /tienda ya está el buscador de ShopControls, sincronizado
                 con el filtro actual — repetirlo acá era espacio duplicado. */}
-            {pathname !== "/tienda" && <NavbarSearch className="hidden max-w-[220px] flex-1 sm:block lg:max-w-[130px] xl:max-w-[170px] 2xl:max-w-[220px]" />}
+            {pathname !== "/tienda" && <NavbarSearch className="hidden max-w-[220px] flex-1 sm:block lg:max-w-[130px] xl:max-w-[170px]" />}
 
             {/* Solo en mobile/tablet — en desktop ya está la versión pill en
                 el footer, no hace falta duplicarla acá al lado del buscador. */}
