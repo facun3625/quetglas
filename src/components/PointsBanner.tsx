@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PointsBannerButton } from "@/components/PointsBannerButton";
 import type { PointsBanner as PointsBannerData } from "@/lib/themes";
 
 // Banner del club de puntos, a todo el ancho del inicio. Se arma con textos y colores del tema (Temas → Banner del club
@@ -34,8 +34,6 @@ export function PointsBanner({ data }: { data: PointsBannerData }) {
   const titleLines = data.title ? data.title.split("\n") : [];
   const features = data.features.filter((f) => f.title || f.subtitle);
   const [clubFirst, ...clubRest] = data.clubName.split(" ");
-  const button = data.buttonLabel && data.buttonHref ? { label: data.buttonLabel, href: data.buttonHref } : null;
-  const ButtonTag = button?.href.startsWith("/") ? Link : "a";
 
   return (
     <section className="px-3 pb-10 pt-0 sm:px-6">
@@ -49,7 +47,7 @@ export function PointsBanner({ data }: { data: PointsBannerData }) {
           <div className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full bg-white/[0.05]" />
           <div className="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-white/[0.04]" />
 
-          <div className="relative grid items-center gap-8 p-6 sm:p-10 lg:grid-cols-[1.2fr_1fr] lg:gap-6">
+          <div className="relative grid items-center gap-6 p-5 sm:px-8 sm:py-7 lg:grid-cols-[1.3fr_1fr] lg:gap-6">
             <div>
               {data.badge && (
                 <span className="inline-flex items-center gap-2 rounded-full bg-black/25 px-4 py-1.5 text-xs font-bold uppercase tracking-wider">
@@ -58,7 +56,7 @@ export function PointsBanner({ data }: { data: PointsBannerData }) {
                 </span>
               )}
               {titleLines.length > 0 && (
-                <h2 className="font-heading mt-4 text-5xl font-extrabold uppercase leading-[0.92] tracking-tight sm:text-7xl">
+                <h2 className="font-heading mt-3 text-4xl font-extrabold uppercase leading-[0.92] tracking-tight sm:text-5xl">
                   {titleLines.map((line, i) => (
                     <span key={i} className="block" style={i % 2 === 1 ? { color: accent } : undefined}>
                       {line}
@@ -67,19 +65,19 @@ export function PointsBanner({ data }: { data: PointsBannerData }) {
                 </h2>
               )}
               {data.ribbon && (
-                <p className="mt-3 inline-block -skew-x-6 rounded-md bg-black/30 px-5 py-2 text-lg font-extrabold uppercase tracking-wide sm:text-2xl">
+                <p className="mt-2 inline-block -skew-x-6 rounded-md bg-black/30 px-4 py-1.5 text-base font-extrabold uppercase tracking-wide sm:text-lg">
                   <span className="inline-block skew-x-6">{data.ribbon}</span>
                 </p>
               )}
-              {data.text && <p className="mt-4 max-w-md text-base text-white/90 sm:text-lg">{data.text}</p>}
+              {data.text && <p className="mt-3 max-w-md text-sm text-white/90 sm:text-base">{data.text}</p>}
 
               {features.length > 0 && (
-                <ul className="mt-6 grid gap-3 min-[480px]:grid-cols-3">
+                <ul className="mt-4 grid gap-3 min-[480px]:grid-cols-3">
                   {features.map((f, i) => {
                     const Icon = FEATURE_ICONS[i] ?? StarIcon;
                     return (
                       <li key={i} className="flex items-center gap-2.5">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white/35">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white/35">
                           <Icon />
                         </span>
                         <span className="leading-tight">
@@ -92,20 +90,15 @@ export function PointsBanner({ data }: { data: PointsBannerData }) {
                 </ul>
               )}
 
-              {button && (
-                <ButtonTag
-                  href={button.href}
-                  className="mt-7 inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-bold uppercase tracking-wide shadow-md transition-transform hover:-translate-y-0.5"
-                  style={{ backgroundColor: accent, color: bg }}
-                >
-                  {button.label}
+              {data.buttonLabel && (
+                <PointsBannerButton label={data.buttonLabel} bg={bg} accent={accent}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-4 w-4" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
                   </svg>
-                </ButtonTag>
+                </PointsBannerButton>
               )}
               {data.footerText && (
-                <p className="mt-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/80">
+                <p className="mt-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/80">
                   <CartIcon />
                   {data.footerText}
                 </p>
@@ -113,20 +106,20 @@ export function PointsBanner({ data }: { data: PointsBannerData }) {
             </div>
 
             {(data.image || data.clubName) && (
-              <div className="flex flex-col items-center gap-6 lg:items-end">
+              <div className="flex flex-col items-center gap-4 lg:items-end">
                 {data.clubName && (
-                  <p className="text-3xl uppercase tracking-wide sm:text-4xl">
+                  <p className="text-2xl uppercase tracking-wide sm:text-3xl">
                     <span className="font-light">{clubFirst}</span>
                     {clubRest.length > 0 && <span className="font-extrabold" style={{ color: accent }}> {clubRest.join(" ")}</span>}
                   </p>
                 )}
                 {data.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={data.image} alt={data.clubName || "Club de puntos"} className="max-h-[340px] w-auto max-w-full object-contain drop-shadow-2xl" loading="lazy" />
+                  <img src={data.image} alt={data.clubName || "Club de puntos"} className="max-h-[260px] w-auto max-w-full object-contain drop-shadow-2xl" loading="lazy" />
                 ) : (
                   <div className="hidden items-center gap-5 lg:flex" aria-hidden="true">
                     {FEATURE_ICONS.map((Icon, i) => (
-                      <span key={i} className={`flex items-center justify-center rounded-full bg-white/10 ring-1 ring-white/25 [&_svg]:h-9 [&_svg]:w-9 ${i === 1 ? "h-24 w-24 -translate-y-4" : "h-20 w-20"}`}>
+                      <span key={i} className={`flex items-center justify-center rounded-full bg-white/10 ring-1 ring-white/25 [&_svg]:h-7 [&_svg]:w-7 ${i === 1 ? "h-[4.5rem] w-[4.5rem] -translate-y-3" : "h-16 w-16"}`}>
                         <Icon />
                       </span>
                     ))}

@@ -541,8 +541,7 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
               <div><label className={label}>Bajada</label><input className={field} value={pb.features[i]?.subtitle ?? ""} maxLength={40} onChange={(e) => setFeature(i, { subtitle: e.target.value })} /></div>
             </div>
           ))}
-          <div><label className={label}>Texto del botón</label><input className={field} value={pb.buttonLabel} maxLength={30} onChange={(e) => setPB({ buttonLabel: e.target.value })} placeholder="Quiero mi cuenta" /></div>
-          <div><label className={label}>Enlace del botón</label><input className={field} value={pb.buttonHref} onChange={(e) => setPB({ buttonHref: e.target.value })} placeholder="/registro" /></div>
+          <div className="sm:col-span-2"><label className={label}>Texto del botón (sin sesión abre el ingreso; con sesión lleva a Mi cuenta → Puntos)</label><input className={field} value={pb.buttonLabel} maxLength={30} onChange={(e) => setPB({ buttonLabel: e.target.value })} placeholder="Quiero mi cuenta" /></div>
           <div className="sm:col-span-2"><label className={label}>Texto de abajo</label><input className={field} value={pb.footerText} maxLength={80} onChange={(e) => setPB({ footerText: e.target.value })} placeholder="Comprá en nuestra tienda online" /></div>
           <div>
             <label className={label}>Color de fondo</label>
