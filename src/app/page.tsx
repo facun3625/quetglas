@@ -220,9 +220,10 @@ const MARQUEE_ITEMS = settings.marqueeItems;
               {theme.config.banners.map((b, i) => {
                 const card = (
                   <>
-                    <div className="aspect-[4/3] w-full overflow-hidden bg-brand-soft">
+                    {/* La imagen se ve entera, con su proporción original (sin recortes) */}
+                    <div className="w-full overflow-hidden bg-brand-soft">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={b.image} alt={b.alt || b.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                      <img src={b.image} alt={b.alt || b.title} className="block h-auto w-full transition-transform duration-300 group-hover:scale-[1.03]" loading="lazy" />
                     </div>
                     {b.title && <p className="px-3 py-2.5 text-center text-sm font-semibold text-brand-ink">{b.title}</p>}
                   </>

@@ -480,7 +480,7 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
             <p className="text-sm font-semibold text-brand-ink">Tarjetas destacadas</p>
             <p className="mt-1 text-xs text-brand-muted">
           Tarjetas chicas con imagen, título y enlace. Se muestran en el inicio, justo arriba de “Explorá por categoría”, con un título de sección
-          opcional. Hasta {MAX_BANNERS}; se reparten el ancho (máximo 4 por fila).
+          opcional. Hasta {MAX_BANNERS}; se reparten el ancho (máximo 4 por fila). La imagen se ve entera: usá el mismo tamaño en todas para que queden parejas.
         </p>
           </div>
           {c.banners.length < MAX_BANNERS && (
