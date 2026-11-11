@@ -149,7 +149,7 @@ export function Navbar({ settings }: { settings: SiteSettings }) {
       <TopContactBar settings={settings} />
 
       {/* Barra principal */}
-      <div className="border-b border-black/5 bg-white px-3 py-3 sm:px-6 sm:py-4">
+      <div className="site-navbar border-b border-black/5 bg-white px-3 py-3 sm:px-6 sm:py-4">
         <div className="mx-auto flex max-w-6xl items-center gap-2 sm:gap-4">
           <button
             className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center text-brand-ink lg:hidden"

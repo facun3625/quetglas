@@ -68,6 +68,8 @@ export type ThemeConfig = {
   buttonStyle: ButtonStyle;
   backgroundImageUrl: string;
   // marquee: el texto se desplaza en loop (por defecto sí)
+  // Barra del menú (logo, links, íconos). Vacío = blanca como siempre; texto vacío = automático según el fondo.
+  navbar: { bg: string; text: string };
   announcement: { enabled: boolean; text: string; href: string; bg: string; color: string; marquee: boolean };
   hero: ThemeSlide[];
   // Tarjetas destacadas del inicio (arriba de "Explorá por categoría"), con un título de sección opcional
@@ -94,6 +96,7 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   headingFont: "default",
   buttonStyle: "pill",
   backgroundImageUrl: "",
+  navbar: { bg: "", text: "" },
   announcement: { enabled: false, text: "", href: "", bg: "#c4161a", color: "#ffffff", marquee: true },
   hero: [],
   bannersTitle: "",
@@ -137,6 +140,7 @@ export function sanitizeThemeConfig(input: unknown): ThemeConfig {
     headingFont: font,
     buttonStyle: button,
     backgroundImageUrl: url(c.backgroundImageUrl),
+    navbar: { bg: hex(asObj(c.navbar).bg, ""), text: hex(asObj(c.navbar).text, "") },
     announcement: {
       enabled: ann.enabled === true,
       text: str(ann.text, 160),
@@ -208,6 +212,16 @@ function sanitizePointsBanner(input: unknown): PointsBanner {
 }
 
 // Variables y reglas CSS del tema (solo valores ya validados)
+// Blanco o el gris oscuro de siempre, el que se lea mejor sobre ese fondo
+function readableOn(hexColor: string): string {
+  const n = parseInt(hexColor.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.45 ? "#383e45" : "#ffffff";
+}
+
 export function themeCss(config: ThemeConfig): string {
   const { colors } = config;
   const rules: string[] = [
@@ -217,6 +231,19 @@ export function themeCss(config: ThemeConfig): string {
   if (font.family) rules.push(`h1,h2,h3,.font-heading{font-family:${font.family},var(--font-poppins),system-ui,sans-serif}`);
   if (config.buttonStyle === "rounded") rules.push(`:is(a,button).rounded-full:where(.bg-brand-pink,.border-brand-pink){border-radius:.5rem}`);
   if (config.buttonStyle === "square") rules.push(`:is(a,button).rounded-full:where(.bg-brand-pink,.border-brand-pink){border-radius:0}`);
+  // Barra del menú con color propio: dentro de ella el "texto" y el "acento" pasan a ser el color de texto elegido; los
+  // desplegables y el buscador (fondos blancos/suaves) vuelven a los colores normales para seguir leyéndose.
+  if (config.navbar.bg) {
+    const bg = config.navbar.bg;
+    const fg = config.navbar.text || readableOn(bg);
+    rules.push(
+      `.site-navbar{background-color:${bg};border-color:transparent;--color-brand-ink:${fg};--color-brand-pink-dark:${fg}}`,
+      `.site-navbar :is(.bg-white,.bg-brand-soft){--color-brand-ink:${colors.ink};--color-brand-pink-dark:${colors.primaryDark}}`,
+      `.site-navbar .border-black\\/10{border-color:color-mix(in srgb,${fg} 35%,transparent)}`,
+      `.site-navbar .hover\\:bg-brand-pink-dark:hover{background-color:${colors.primaryDark}}`,
+      `.site-navbar a.bg-brand-pink{box-shadow:0 0 0 1px color-mix(in srgb,${fg} 45%,transparent)}`
+    );
+  }
   if (config.backgroundImageUrl) rules.push(`body{background-image:url("${config.backgroundImageUrl}");background-size:cover;background-attachment:fixed;background-position:center}`);
   return rules.join("\n");
 }

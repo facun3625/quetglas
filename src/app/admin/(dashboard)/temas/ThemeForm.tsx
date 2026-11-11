@@ -375,6 +375,14 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
             </div>
           ))}
         </div>
+        <div className="mt-5 border-t border-black/5 pt-4">
+          <p className="text-xs font-semibold text-brand-ink">Barra del menú</p>
+          <p className="mt-0.5 text-xs text-brand-muted">La franja del logo, los links y los íconos. Sin color elegido queda blanca. Si el logo no se lee sobre el fondo, subí una versión clara en Configuración → Logo.</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <SlideColor text="Fondo" value={c.navbar?.bg ?? ""} fallback="#ffffff" onChange={(v) => setConfig({ navbar: { text: c.navbar?.text ?? "", bg: v } })} />
+            <SlideColor text="Texto e íconos (por defecto: automático según el fondo)" value={c.navbar?.text ?? ""} fallback={c.navbar?.bg ? "#ffffff" : c.colors.ink} onChange={(v) => setConfig({ navbar: { bg: c.navbar?.bg ?? "", text: v } })} />
+          </div>
+        </div>
       </div>
 
       <div id="sec-tipografia" className={`${card} scroll-mt-4`}>
