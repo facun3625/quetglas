@@ -70,6 +70,11 @@ body {
   animation: marquee 45s linear infinite;
 }
 
+/* Barra de anuncio en movimiento (Temas → Barra de anuncio) */
+.animate-announcement {
+  animation: marquee 40s linear infinite;
+}
+
 /* Flechita nativa del <select> reemplazada por una propia con más aire —
    la de cada navegador se pega demasiado al borde y queda encimada con el
    texto cuando el campo no es muy ancho. */

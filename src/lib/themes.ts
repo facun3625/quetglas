@@ -67,7 +67,8 @@ export type ThemeConfig = {
   headingFont: FontKey;
   buttonStyle: ButtonStyle;
   backgroundImageUrl: string;
-  announcement: { enabled: boolean; text: string; href: string; bg: string; color: string };
+  // marquee: el texto se desplaza en loop (por defecto sí)
+  announcement: { enabled: boolean; text: string; href: string; bg: string; color: string; marquee: boolean };
   hero: ThemeSlide[];
   // Tarjetas destacadas del inicio (arriba de "Explorá por categoría"), con un título de sección opcional
   bannersTitle: string;
@@ -93,7 +94,7 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   headingFont: "default",
   buttonStyle: "pill",
   backgroundImageUrl: "",
-  announcement: { enabled: false, text: "", href: "", bg: "#c4161a", color: "#ffffff" },
+  announcement: { enabled: false, text: "", href: "", bg: "#c4161a", color: "#ffffff", marquee: true },
   hero: [],
   bannersTitle: "",
   banners: [],
@@ -142,6 +143,7 @@ export function sanitizeThemeConfig(input: unknown): ThemeConfig {
       href: url(ann.href),
       bg: hex(ann.bg, DEFAULT_THEME_CONFIG.announcement.bg),
       color: hex(ann.color, DEFAULT_THEME_CONFIG.announcement.color),
+      marquee: ann.marquee !== false,
     },
     hero: asArray(c.hero)
       .map((raw) => {
@@ -250,31 +252,31 @@ export function themeStatus(t: ThemeWindow, activeId: string | null, now = new D
 export const THEME_TEMPLATES: { key: string; name: string; description: string; config: Partial<ThemeConfig> }[] = [
   {
     key: "navidad", name: "Navidad", description: "Rojo y verde, con barra de anuncio.",
-    config: { colors: { primary: "#c0392b", primaryDark: "#922b21", ink: "#1e3a2f", muted: "#5b6b62", soft: "#f6efe6", background: "#ffffff" }, headingFont: "playfair", buttonStyle: "rounded", announcement: { enabled: true, text: "🎄 Ofertas de Navidad: envíos en todo el país", href: "/tienda?ofertas=1", bg: "#1e6b43", color: "#ffffff" } },
+    config: { colors: { primary: "#c0392b", primaryDark: "#922b21", ink: "#1e3a2f", muted: "#5b6b62", soft: "#f6efe6", background: "#ffffff" }, headingFont: "playfair", buttonStyle: "rounded", announcement: { enabled: true, text: "🎄 Ofertas de Navidad: envíos en todo el país", href: "/tienda?ofertas=1", bg: "#1e6b43", color: "#ffffff", marquee: true } },
   },
   {
     key: "black-friday", name: "Black Friday", description: "Negro y amarillo de alto contraste.",
-    config: { colors: { primary: "#f5b700", primaryDark: "#c58f00", ink: "#111111", muted: "#555555", soft: "#f2f2f2", background: "#ffffff" }, headingFont: "bebas", buttonStyle: "square", announcement: { enabled: true, text: "BLACK FRIDAY — hasta 40% off en toda la tienda", href: "/tienda?ofertas=1", bg: "#111111", color: "#f5b700" } },
+    config: { colors: { primary: "#f5b700", primaryDark: "#c58f00", ink: "#111111", muted: "#555555", soft: "#f2f2f2", background: "#ffffff" }, headingFont: "bebas", buttonStyle: "square", announcement: { enabled: true, text: "BLACK FRIDAY — hasta 40% off en toda la tienda", href: "/tienda?ofertas=1", bg: "#111111", color: "#f5b700", marquee: true } },
   },
   {
     key: "hot-sale", name: "Hot Sale", description: "Naranja intenso para liquidaciones.",
-    config: { colors: { primary: "#ff6b1a", primaryDark: "#d94e00", ink: "#2b2b2b", muted: "#6b5d55", soft: "#fff4ec", background: "#ffffff" }, headingFont: "oswald", announcement: { enabled: true, text: "🔥 Hot Sale: cuotas y descuentos por tiempo limitado", href: "/tienda?ofertas=1", bg: "#d94e00", color: "#ffffff" } },
+    config: { colors: { primary: "#ff6b1a", primaryDark: "#d94e00", ink: "#2b2b2b", muted: "#6b5d55", soft: "#fff4ec", background: "#ffffff" }, headingFont: "oswald", announcement: { enabled: true, text: "🔥 Hot Sale: cuotas y descuentos por tiempo limitado", href: "/tienda?ofertas=1", bg: "#d94e00", color: "#ffffff", marquee: true } },
   },
   {
     key: "dia-de-la-madre", name: "Día de la Madre", description: "Rosa suave y tipografía elegante.",
-    config: { colors: { primary: "#e86a92", primaryDark: "#c2185b", ink: "#4a3040", muted: "#7a5a6b", soft: "#fdf1f5", background: "#ffffff" }, headingFont: "playfair", announcement: { enabled: true, text: "💐 Día de la Madre: regalos para sorprender", href: "/tienda", bg: "#c2185b", color: "#ffffff" } },
+    config: { colors: { primary: "#e86a92", primaryDark: "#c2185b", ink: "#4a3040", muted: "#7a5a6b", soft: "#fdf1f5", background: "#ffffff" }, headingFont: "playfair", announcement: { enabled: true, text: "💐 Día de la Madre: regalos para sorprender", href: "/tienda", bg: "#c2185b", color: "#ffffff", marquee: true } },
   },
   {
     key: "dia-del-padre", name: "Día del Padre", description: "Azules sobrios.",
-    config: { colors: { primary: "#2f6fb3", primaryDark: "#1d4e85", ink: "#1f2a37", muted: "#556270", soft: "#eef3f9", background: "#ffffff" }, headingFont: "montserrat", buttonStyle: "rounded", announcement: { enabled: true, text: "👔 Día del Padre: encontrá el regalo ideal", href: "/tienda", bg: "#1d4e85", color: "#ffffff" } },
+    config: { colors: { primary: "#2f6fb3", primaryDark: "#1d4e85", ink: "#1f2a37", muted: "#556270", soft: "#eef3f9", background: "#ffffff" }, headingFont: "montserrat", buttonStyle: "rounded", announcement: { enabled: true, text: "👔 Día del Padre: encontrá el regalo ideal", href: "/tienda", bg: "#1d4e85", color: "#ffffff", marquee: true } },
   },
   {
     key: "halloween", name: "Halloween", description: "Naranja y violeta oscuro.",
-    config: { colors: { primary: "#ff7a1a", primaryDark: "#c75600", ink: "#24133a", muted: "#5d4a73", soft: "#f4eefb", background: "#ffffff" }, headingFont: "pacifico", announcement: { enabled: true, text: "🎃 Semana de Halloween: sorpresas y descuentos", href: "/tienda?ofertas=1", bg: "#24133a", color: "#ff7a1a" } },
+    config: { colors: { primary: "#ff7a1a", primaryDark: "#c75600", ink: "#24133a", muted: "#5d4a73", soft: "#f4eefb", background: "#ffffff" }, headingFont: "pacifico", announcement: { enabled: true, text: "🎃 Semana de Halloween: sorpresas y descuentos", href: "/tienda?ofertas=1", bg: "#24133a", color: "#ff7a1a", marquee: true } },
   },
   {
     key: "lanzamiento", name: "Lanzamiento", description: "Colores de estreno sobre la base de la tienda.",
-    config: { colors: { ...BASE_COLORS, primary: "#6c4de6", primaryDark: "#4b2fc0" }, headingFont: "raleway", announcement: { enabled: true, text: "✨ Nueva colección ya disponible", href: "/tienda", bg: "#4b2fc0", color: "#ffffff" } },
+    config: { colors: { ...BASE_COLORS, primary: "#6c4de6", primaryDark: "#4b2fc0" }, headingFont: "raleway", announcement: { enabled: true, text: "✨ Nueva colección ya disponible", href: "/tienda", bg: "#4b2fc0", color: "#ffffff", marquee: true } },
   },
 ];
 

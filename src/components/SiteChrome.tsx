@@ -36,7 +36,7 @@ export function SiteChrome({
   settings: SiteSettings;
   isMaintenancePage: boolean;
   // Barra de anuncio del tema vigente (null = no hay)
-  announcement: { text: string; href: string; bg: string; color: string } | null;
+  announcement: { text: string; href: string; bg: string; color: string; marquee?: boolean } | null;
   // Si un administrador está viendo la vista previa de un tema, su nombre
   previewThemeName: string | null;
 }) {
@@ -75,13 +75,35 @@ export function SiteChrome({
     <>
       <VisitTracker />
       {announcement && announcement.text && (
-        <div className="px-4 py-2 text-center text-xs font-semibold sm:text-sm" style={{ backgroundColor: announcement.bg, color: announcement.color }}>
-          {announcement.href ? (
-            <a href={announcement.href} className="hover:underline">{announcement.text}</a>
-          ) : (
-            announcement.text
-          )}
-        </div>
+        announcement.marquee ? (
+          // Texto en movimiento: dos mitades iguales que se desplazan en loop (se frena al pasar el mouse)
+          <div className="group overflow-hidden whitespace-nowrap py-2 text-xs font-semibold sm:text-sm" style={{ backgroundColor: announcement.bg, color: announcement.color }}>
+            <div className="animate-announcement flex w-max group-hover:[animation-play-state:paused]">
+              {[0, 1].map((half) => (
+                <div key={half} className="flex shrink-0" aria-hidden={half === 1 || undefined}>
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <span key={i} className="flex items-center">
+                      {announcement.href ? (
+                        <a href={announcement.href} tabIndex={half === 1 ? -1 : undefined} className="hover:underline">{announcement.text}</a>
+                      ) : (
+                        announcement.text
+                      )}
+                      <span className="px-8 opacity-60" aria-hidden="true">•</span>
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="px-4 py-2 text-center text-xs font-semibold sm:text-sm" style={{ backgroundColor: announcement.bg, color: announcement.color }}>
+            {announcement.href ? (
+              <a href={announcement.href} className="hover:underline">{announcement.text}</a>
+            ) : (
+              announcement.text
+            )}
+          </div>
+        )
       )}
       <Navbar settings={settings} />
       <div className="flex-1">{children}</div>
