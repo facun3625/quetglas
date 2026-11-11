@@ -10,6 +10,7 @@ async function legacySlidesAsHero(): Promise<ThemeConfig["hero"]> {
   return rows.map((s) => ({
     image: s.imageUrl ?? "/hero-bg.jpg",
     videoUrl: "",
+    bgColor: "",
     eyebrow: s.eyebrow,
     title: s.title,
     titleColor: "",

@@ -21,7 +21,7 @@ const COLOR_FIELDS: { key: keyof ThemeConfig["colors"]; label: string; hint: str
   { key: "background", label: "Fondo general", hint: "color de fondo de la tienda" },
 ];
 
-const EMPTY_SLIDE: ThemeSlide = { image: "", videoUrl: "", eyebrow: "", title: "", titleColor: "", titleAccentColor: "", subtitle: "", promoText: "", buttons: [] };
+const EMPTY_SLIDE: ThemeSlide = { image: "", videoUrl: "", bgColor: "", eyebrow: "", title: "", titleColor: "", titleAccentColor: "", subtitle: "", promoText: "", buttons: [] };
 
 async function uploadImage(file: File): Promise<string | null> {
   const body = new FormData();
@@ -438,7 +438,7 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-brand-ink">{isBase ? "Slider de la portada" : "Slider de la campaña"}</p>
-            <p className="mt-1 text-xs text-brand-muted">{isBase ? "Es el slider de siempre de la tienda: se ve cuando no hay una campaña con slider propio." : "Si cargás slides, reemplazan al slider del aspecto base mientras este tema esté vigente. Si no cargás ninguno, se ve el del aspecto base."} Hasta {MAX_SLIDES} slides; cada uno necesita una imagen o un video; los textos y botones son opcionales (sin texto, la imagen se ve sola, sin sombra).</p>
+            <p className="mt-1 text-xs text-brand-muted">{isBase ? "Es el slider de siempre de la tienda: se ve cuando no hay una campaña con slider propio." : "Si cargás slides, reemplazan al slider del aspecto base mientras este tema esté vigente. Si no cargás ninguno, se ve el del aspecto base."} Hasta {MAX_SLIDES} slides; cada uno necesita un fondo (imagen, video o color); los textos y botones son opcionales (sin texto, la imagen se ve sola, sin sombra).</p>
           </div>
           {c.hero.length < MAX_SLIDES && (
             <button type="button" onClick={() => setConfig({ hero: [...c.hero, { ...EMPTY_SLIDE }] })} className="cursor-pointer rounded-lg bg-brand-pink px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark">+ Agregar slide</button>
@@ -453,6 +453,9 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
               </div>
               <ImageField label={s.videoUrl ? "Imagen de portada del video (opcional)" : "Imagen"} value={s.image} onChange={(url) => setSlide(i, { image: url })} />
               <div className="mt-3"><VideoField value={s.videoUrl} onChange={(url) => setSlide(i, { videoUrl: url })} /></div>
+              <div className="mt-3 max-w-sm">
+                <SlideColor text="Color de fondo (se usa si no hay imagen ni video)" value={s.bgColor} fallback={c.colors.primaryDark} onChange={(v) => setSlide(i, { bgColor: v })} />
+              </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div><label className={label}>Texto superior</label><input className={field} value={s.eyebrow} maxLength={60} onChange={(e) => setSlide(i, { eyebrow: e.target.value })} /></div>
                 <div><label className={label}>Título (para 2 líneas, separalas con “/”)</label><input className={field} value={s.title.replace(/\n/g, " / ")} maxLength={80} onChange={(e) => setSlide(i, { title: e.target.value.replace(/\s*\/\s*/g, "\n") })} /></div>
@@ -517,7 +520,7 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
             <p className="text-sm font-semibold text-brand-ink">Banner del club de puntos</p>
             <p className="mt-1 text-xs text-brand-muted">
               Banner a todo el ancho en el inicio (debajo de “Explorá por categoría”) que invita a sumarse al club de puntos. Se arma con estos
-              textos y colores. Solo se ve si el sistema de puntos está activo (menú Puntos).
+              textos y colores.
               {!isBase && " Si no lo activás en esta campaña, se usa el del aspecto base."}
             </p>
           </div>

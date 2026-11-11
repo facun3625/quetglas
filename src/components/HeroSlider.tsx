@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 export type HeroSlide = {
   image: string; // imagen del slide; si tiene video, es su portada (carga mientras llega el video y en el celular)
   videoUrl?: string | null;
+  bgColor?: string | null; // fondo liso cuando no hay imagen ni video
   eyebrow: string;
   title: string; // hasta 2 líneas separadas por \n (puede ir vacío: slide de solo imagen)
   titleColor?: string | null; // 1.ª línea (por defecto blanco)
@@ -68,7 +69,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
           <motion.div
             key={`bg-${index}`}
             className="absolute inset-0 bg-cover bg-center"
-            style={slide.image ? { backgroundImage: `url(${slide.image})` } : { backgroundColor: "#111" }}
+            style={slide.image ? { backgroundImage: `url(${slide.image})` } : { backgroundColor: slide.bgColor || "#111" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -93,7 +94,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
         </AnimatePresence>
         {/* Oscurece la izquierda (donde va el texto) y deja la foto a la
             vista del lado derecho — la imagen cubre TODO el banner. */}
-        {hasText && <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />}
+        {hasText && (slide.image || slide.videoUrl) && <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />}
       </div>
 
       {promoLines.length > 0 && (

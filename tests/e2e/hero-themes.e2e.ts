@@ -30,7 +30,7 @@ async function main() {
 
   // guardar un slide con video en el aspecto base
   const cfg = sanitizeThemeConfig(base.config);
-  cfg.hero.push({ image: '', videoUrl: 'https://drive.google.com/file/d/1AbCdEfGhIjKlMnOp/view', eyebrow: '', title: 'Con video', titleColor: '', titleAccentColor: '', subtitle: '', promoText: '', buttons: [] });
+  cfg.hero.push({ image: '', videoUrl: 'https://drive.google.com/file/d/1AbCdEfGhIjKlMnOp/view', bgColor: '', eyebrow: '', title: 'Con video', titleColor: '', titleAccentColor: '', subtitle: '', promoText: '', buttons: [] });
   assert.equal((await t.saveTheme({ id: base.id, name: 'x', description: '', startsAt: '', endsAt: '', config: cfg })).ok, true);
   const saved = sanitizeThemeConfig((await prisma.theme.findUniqueOrThrow({ where: { id: base.id } })).config).hero;
   assert.equal(saved.length, 3); assert.equal(saved[2].videoUrl, 'https://drive.google.com/uc?export=download&id=1AbCdEfGhIjKlMnOp');

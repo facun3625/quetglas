@@ -20,7 +20,8 @@ export const FONT_CHOICES: Record<FontKey, { label: string; family: string | nul
 export type ButtonStyle = "pill" | "rounded" | "square";
 
 // titleColor / titleAccentColor: colores de la 1.ª y 2.ª línea del título (vacío = blanco / color principal de la tienda)
-export type ThemeSlide = { image: string; videoUrl: string; eyebrow: string; title: string; titleColor: string; titleAccentColor: string; subtitle: string; promoText: string; buttons: { label: string; href: string }[] };
+// bgColor: fondo liso del slide cuando no hay imagen ni video
+export type ThemeSlide = { image: string; videoUrl: string; bgColor: string; eyebrow: string; title: string; titleColor: string; titleAccentColor: string; subtitle: string; promoText: string; buttons: { label: string; href: string }[] };
 
 // Banner del club de puntos: ocupa todo el ancho del inicio, armado con textos (no es una imagen), así se puede editar
 // desde Temas. title: 2 líneas separadas por \n. image: opcional, a la derecha (ej.: un celular con la tienda).
@@ -148,6 +149,7 @@ export function sanitizeThemeConfig(input: unknown): ThemeConfig {
         return {
           image: url(s.image),
           videoUrl: normalizeVideoUrl(str(s.videoUrl, 600)),
+          bgColor: hex(s.bgColor, ""),
           eyebrow: str(s.eyebrow, 60),
           title: str(s.title, 80),
           titleColor: hex(s.titleColor, ""),
@@ -160,9 +162,9 @@ export function sanitizeThemeConfig(input: unknown): ThemeConfig {
             .slice(0, 3),
         };
       })
-      // Cada slide necesita una imagen o un video (la imagen es también la portada del video). Los textos son opcionales:
-      // un slide puede ser solo la imagen.
-      .filter((s) => s.image || s.videoUrl)
+      // Cada slide necesita un fondo: imagen, video o color liso (la imagen es también la portada del video). Los textos son
+      // opcionales: un slide puede ser solo la imagen.
+      .filter((s) => s.image || s.videoUrl || s.bgColor)
       .slice(0, MAX_SLIDES),
     bannersTitle: str(c.bannersTitle, 80),
     banners: asArray(c.banners)

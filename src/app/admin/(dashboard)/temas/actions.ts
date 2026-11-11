@@ -59,7 +59,7 @@ function incompleteItems(config: ThemeConfig): string | null {
   const hero = Array.isArray(config?.hero) ? config.hero : [];
   for (let i = 0; i < hero.length; i++) {
     const s = hero[i];
-    if (!s?.image?.trim() && !s?.videoUrl?.trim()) return `Al slide ${i + 1} le falta la imagen o el video: subila o quitá el slide.`;
+    if (!s?.image?.trim() && !s?.videoUrl?.trim() && !s?.bgColor?.trim()) return `Al slide ${i + 1} le falta el fondo: subí una imagen o un video, o elegí un color de fondo.`;
   }
   const banners = Array.isArray(config?.banners) ? config.banners : [];
   for (let i = 0; i < banners.length; i++) {

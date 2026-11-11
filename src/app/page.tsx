@@ -15,7 +15,6 @@ import { ensureBaseTheme } from "@/lib/baseTheme";
 import { sanitizeThemeConfig, type ThemeSlide } from "@/lib/themes";
 import { StoreMap, type StoreLocation } from "@/components/StoreMap";
 import { PointsBanner } from "@/components/PointsBanner";
-import { getStoreSettings as getPointsSettings } from "@/lib/points";
 import type { ProductListItem } from "@/types/catalog";
 
 import { storeNameOf } from "@/lib/storeName";
@@ -121,6 +120,7 @@ const MARQUEE_ITEMS = settings.marqueeItems;
   const toSlide = (s: ThemeSlide): HeroSlide => ({
     image: s.image,
     videoUrl: s.videoUrl || null,
+    bgColor: s.bgColor || null,
     eyebrow: s.eyebrow,
     title: s.title,
     titleColor: s.titleColor || null,
@@ -132,12 +132,8 @@ const MARQUEE_ITEMS = settings.marqueeItems;
   let baseConfigP: Promise<ReturnType<typeof sanitizeThemeConfig>> | null = null;
   const baseConfig = () => (baseConfigP ??= ensureBaseTheme().then((b) => sanitizeThemeConfig(b?.config)));
   const baseHero = theme && theme.config.hero.length > 0 ? theme.config.hero : (await baseConfig()).hero;
-  // Banner del club de puntos: el del tema vigente si lo activó, si no el del aspecto base. Solo con el sistema de puntos activo.
-  const pointsBanner = (await getPointsSettings()).pointsEnabled
-    ? theme?.config.pointsBanner.enabled
-      ? theme.config.pointsBanner
-      : (await baseConfig()).pointsBanner
-    : null;
+  // Banner del club de puntos: el del tema vigente si lo activó, si no el del aspecto base.
+  const pointsBanner = theme?.config.pointsBanner.enabled ? theme.config.pointsBanner : (await baseConfig()).pointsBanner;
   const heroSlides: HeroSlide[] =
     baseHero.length > 0
       ? baseHero.map(toSlide)
