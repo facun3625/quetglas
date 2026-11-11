@@ -476,3 +476,14 @@ export async function updateUsageQuotas(formData: FormData) {
   revalidatePath("/admin/inicio");
   revalidatePath("/", "layout");
 }
+
+// Configuración → Productos: etiqueta de descuento y leyendas de precio (cuotas / texto libre)
+export async function saveProductDisplay(input: unknown): Promise<{ ok: true }> {
+  await requireAdmin();
+  const { sanitizeProductDisplay } = await import("@/lib/productDisplay");
+  const data = { productDisplay: sanitizeProductDisplay(input) as object };
+  await prisma.storeSettings.upsert({ where: { id: "global" }, create: { id: "global", ...data }, update: data });
+  revalidatePath("/admin/configuracion");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}

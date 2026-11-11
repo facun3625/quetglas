@@ -12,6 +12,7 @@ import { isStaff } from "@/lib/roles";
 import { CartIcon, BellIcon, HeartIcon, PencilIcon } from "@/components/icons";
 import { ProductImage } from "@/components/ProductImage";
 import { WaitlistModal } from "@/components/WaitlistModal";
+import { DiscountBadge, PriceNotes } from "@/components/PriceExtras";
 
 export function ProductCard({ product }: { product: ProductListItem }) {
   const { addItem } = useCart();
@@ -77,7 +78,12 @@ export function ProductCard({ product }: { product: ProductListItem }) {
       <Link href={`/producto/${product.slug}`} className="break-words text-sm font-medium text-brand-ink hover:text-brand-pink-dark">
         {product.name}
       </Link>
-      <div className="mt-1 flex items-center gap-2">
+      {hasDiscount && !outOfStock && (
+        <div className="mt-1.5">
+          <DiscountBadge price={product.price} compareAtPrice={product.compareAtPrice} />
+        </div>
+      )}
+      <div className="mt-1 flex flex-wrap items-center gap-x-2">
         <p className={`text-sm font-bold ${outOfStock ? "text-brand-ink" : "text-brand-pink-dark"}`}>
           {isVariable && <span className="mr-1 text-[10px] font-medium uppercase text-brand-muted">Desde</span>}
           {formatMoney(product.price)}
@@ -92,6 +98,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </span>
         )}
       </div>
+      {!outOfStock && <PriceNotes price={product.price} where="card" />}
 
       {outOfStock ? (
         <button

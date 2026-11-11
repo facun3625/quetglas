@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { sanitizeProductDisplay } from "@/lib/productDisplay";
 import { DEFAULT_FRANCHISE_LOCATION } from "@/lib/contact";
 import { resolveContact } from "@/lib/contactInfo";
 import { getHumanSellerAvailability } from "@/lib/ai/availability";
@@ -76,6 +77,7 @@ export async function getSiteSettings() {
       : DEFAULT_MARQUEE,
     featuredCategoryIds: row.featuredCategoryIds.length > 0 ? row.featuredCategoryIds : DEFAULT_FEATURED_CATEGORY_IDS,
     cartAutoCloseSeconds: Math.min(10, Math.max(0, row.cartAutoCloseSeconds)),
+    productDisplay: sanitizeProductDisplay(row.productDisplay),
     // Franja de beneficios del home — null en cualquier campo significa
     // "usar el valor calculado por defecto" (ver BenefitsStrip).
     // Franja de beneficios editable (1 a 6 ítems). Vacío = se usan los 3 de siempre (benefits)

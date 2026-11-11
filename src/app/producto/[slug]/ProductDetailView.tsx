@@ -1,6 +1,7 @@
 "use client";
 
 import { sanitizeRichHtml } from "@/lib/sanitizeHtml";
+import { DiscountBadge, PriceNotes } from "@/components/PriceExtras";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -155,13 +156,19 @@ export function ProductDetailView({ product }: { product: ProductDetail }) {
           <h1 className="text-2xl font-bold text-brand-ink sm:text-3xl">{product.name}</h1>
           {product.sku && <p className="mt-1 text-xs text-brand-muted">SKU: {variant?.sku ?? product.sku}</p>}
 
-          <div className="mt-4 flex items-baseline gap-3">
+          {hasDiscount && (
+            <div className="mt-4">
+              <DiscountBadge price={price} compareAtPrice={compareAtPrice} size="lg" />
+            </div>
+          )}
+          <div className={`${hasDiscount ? "mt-2" : "mt-4"} flex items-baseline gap-3`}>
             <p className="text-2xl font-bold text-brand-pink-dark">
               {needsSelection && <span className="mr-1 text-xs font-medium uppercase text-brand-muted">Desde</span>}
               {formatMoney(price)}
             </p>
             {hasDiscount && <p className="text-sm text-brand-muted line-through">{formatMoney(compareAtPrice!)}</p>}
           </div>
+          <PriceNotes price={price} where="product" />
 
           {product.shortDescription && <div className="rich-content mt-4 text-sm text-brand-ink/80" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(product.shortDescription) }} />}
           {product.tags.length > 0 && (

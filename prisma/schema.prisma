@@ -290,6 +290,10 @@ model StoreSettings {
   // Texto corto del pie de página (debajo del logo). Vacío = texto por defecto.
   footerText String?
 
+  // Cómo se muestran los precios en tarjetas y en la página del producto: etiqueta de descuento ("-40% OFF") y
+  // leyendas de cuotas o texto libre con logo (ver lib/productDisplay.ts). Configuración → Productos.
+  productDisplay Json?
+
   // Secciones del inicio configurables (título editable, se pueden apagar)
   homeFeaturedEnabled Boolean @default(true)
   homeFeaturedTitle   String?

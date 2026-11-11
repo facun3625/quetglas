@@ -9,11 +9,14 @@ import { FavoritesProvider } from "@/lib/favorites";
 import { CouponCapture } from "@/components/CouponCapture";
 import { CurrencyProvider, type CurrencyCode } from "@/lib/currency";
 import { CartRecoveryPrompt } from "@/components/CartRecoveryPrompt";
+import { ProductDisplayProvider } from "@/components/PriceExtras";
+import { DEFAULT_PRODUCT_DISPLAY, type ProductDisplay } from "@/lib/productDisplay";
 
-export function Providers({ children, currency, cartAutoCloseSeconds }: { children: React.ReactNode; currency: CurrencyCode; cartAutoCloseSeconds: number }) {
+export function Providers({ children, currency, cartAutoCloseSeconds, productDisplay = DEFAULT_PRODUCT_DISPLAY }: { children: React.ReactNode; currency: CurrencyCode; cartAutoCloseSeconds: number; productDisplay?: ProductDisplay }) {
   return (
     <SessionProvider>
       <CurrencyProvider currency={currency}>
+      <ProductDisplayProvider value={productDisplay}>
       <FavoritesProvider>
         <CartProvider autoCloseSeconds={cartAutoCloseSeconds}>
           <AuthModalProvider>
@@ -25,6 +28,7 @@ export function Providers({ children, currency, cartAutoCloseSeconds }: { childr
           </AuthModalProvider>
         </CartProvider>
       </FavoritesProvider>
+      </ProductDisplayProvider>
       </CurrencyProvider>
     </SessionProvider>
   );

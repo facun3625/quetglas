@@ -31,6 +31,8 @@ import { STATUS_EMAIL_DEFAULTS } from "@/lib/orderStatusEmails";
 import { DEFAULT_CHECKOUT_TEXTS } from "@/lib/checkoutTexts";
 import { getCashDiscountPct } from "@/lib/paymentSettings";
 import { syncNow } from "../puntos/actions";
+import { ProductDisplayForm } from "./ProductDisplayForm";
+import { sanitizeProductDisplay } from "@/lib/productDisplay";
 import {
   updateSiteSettings,
   updateSeoSettings,
@@ -1081,6 +1083,7 @@ export default async function AdminConfiguracionPage({
         tabs={[
           { id: "general", label: "General", content: generalPanel },
           { id: "beneficios", label: "Beneficios", content: benefitsPanel },
+          { id: "productos", label: "Productos", content: <ProductDisplayForm initial={sanitizeProductDisplay(settings.productDisplay)} /> },
           { id: "mailing", label: "Franquicia", content: mailingPanel },
           ...(isSuper
             ? [

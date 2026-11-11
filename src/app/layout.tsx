@@ -74,7 +74,7 @@ export default async function RootLayout({
       </head>
       <body className="flex min-h-full flex-col font-sans">
         <SiteTags gaId={cleanGaId(row.gaMeasurementId ?? "")} gtmId={cleanGtmId(row.gtmId ?? "")} pixelId={cleanPixelId(row.metaPixelId ?? "")} tags={customTags} />
-        <Providers currency={settings.currency} cartAutoCloseSeconds={settings.cartAutoCloseSeconds}>
+        <Providers currency={settings.currency} cartAutoCloseSeconds={settings.cartAutoCloseSeconds} productDisplay={settings.productDisplay}>
           <SiteChrome settings={settings} isMaintenancePage={isMaintenancePage} announcement={theme?.config.announcement.enabled ? theme.config.announcement : null} previewThemeName={theme?.previewing ? theme.name : null}>
             {children}
           </SiteChrome>
