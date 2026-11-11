@@ -71,8 +71,16 @@ body {
 }
 
 /* Barra de anuncio en movimiento (Temas → Barra de anuncio) */
+@keyframes announcement {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
 .animate-announcement {
-  animation: marquee 40s linear infinite;
+  animation: announcement 22s linear infinite;
 }
 
 /* Flechita nativa del <select> reemplazada por una propia con más aire —

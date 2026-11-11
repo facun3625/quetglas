@@ -423,7 +423,7 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
           </div>
           <label className="flex items-center gap-2 text-sm text-brand-ink sm:col-span-2">
             <input type="checkbox" checked={c.announcement.marquee !== false} onChange={(e) => setConfig({ announcement: { ...c.announcement, marquee: e.target.checked } })} />
-            Texto en movimiento (se desplaza de derecha a izquierda; se frena al pasar el mouse)
+            Texto en movimiento (entra por la derecha y cruza la barra; se frena al pasar el mouse)
           </label>
           <div className="flex gap-4">
             <div>
