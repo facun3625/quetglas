@@ -32,6 +32,7 @@ async function uploadImage(file: File): Promise<string | null> {
 
 function ImageField({ value, onChange, label: text }: { value: string; onChange: (url: string) => void; label: string }) {
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   return (
     <div>
       <label className={label}>{text}</label>
@@ -54,14 +55,17 @@ function ImageField({ value, onChange, label: text }: { value: string; onChange:
               e.target.value = "";
               if (!file) return;
               setBusy(true);
-              const url = await uploadImage(file);
+              setFailed(false);
+              const url = await uploadImage(file).catch(() => null);
               setBusy(false);
               if (url) onChange(url);
+              else setFailed(true);
             }}
           />
         </label>
         {value && <button type="button" onClick={() => onChange("")} className="cursor-pointer text-xs text-red-600 hover:underline">Quitar</button>}
       </div>
+      {failed && <p className="mt-1 text-xs text-red-600">No se pudo subir la imagen. Probá de nuevo o con otra (JPG, PNG o WebP).</p>}
     </div>
   );
 }

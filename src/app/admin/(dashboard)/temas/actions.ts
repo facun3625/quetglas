@@ -54,8 +54,27 @@ export async function resetBaseTheme(id: string) {
   refresh();
 }
 
+// Lo que el guardado descartaría en silencio (slides o tarjetas incompletos): mejor avisar y no guardar.
+function incompleteItems(config: ThemeConfig): string | null {
+  const hero = Array.isArray(config?.hero) ? config.hero : [];
+  for (let i = 0; i < hero.length; i++) {
+    const s = hero[i];
+    const hasMedia = Boolean(s?.image?.trim() || s?.videoUrl?.trim());
+    if (!s?.title?.trim() && !hasMedia) return `El slide ${i + 1} está vacío: completalo o quitalo.`;
+    if (!s?.title?.trim()) return `Al slide ${i + 1} le falta el título.`;
+    if (!hasMedia) return `Al slide ${i + 1} le falta la imagen o el video.`;
+  }
+  const banners = Array.isArray(config?.banners) ? config.banners : [];
+  for (let i = 0; i < banners.length; i++) {
+    if (!banners[i]?.image?.trim()) return `A la tarjeta ${i + 1} le falta la imagen: subila o quitala.`;
+  }
+  return null;
+}
+
 export async function saveTheme(input: ThemeInput, activate = false): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   await requireAdmin();
+  const incomplete = incompleteItems(input.config);
+  if (incomplete) return { ok: false, error: incomplete };
   const isBase = input.id ? Boolean((await prisma.theme.findUnique({ where: { id: input.id }, select: { isBase: true } }))?.isBase) : false;
   if (isBase) {
     // El aspecto base vale siempre: no tiene fechas ni se activa/apaga
