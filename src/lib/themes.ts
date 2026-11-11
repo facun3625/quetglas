@@ -79,6 +79,9 @@ export type ThemeConfig = {
   // la del aspecto base (Category.imageUrl). No aplica al aspecto base en sí, que usa Category.imageUrl directo.
   categoryImages: Record<string, string>;
   pointsBanner: PointsBanner;
+  // Banner de solo imagen al final de la portada, a todo el ancho y con el alto de la imagen (sin recortes).
+  // mobileImage: versión opcional para celular; href: enlace opcional.
+  bottomBanner: { image: string; mobileImage: string; href: string; alt: string };
 };
 
 // Los colores de la tienda tal cual están hoy (el "tema base")
@@ -102,6 +105,7 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   bannersTitle: "",
   banners: [],
   pointsBanner: DEFAULT_POINTS_BANNER,
+  bottomBanner: { image: "", mobileImage: "", href: "", alt: "" },
   categoryImages: {},
 };
 
@@ -185,6 +189,12 @@ export function sanitizeThemeConfig(input: unknown): ThemeConfig {
         .slice(0, 200)
     ),
     pointsBanner: sanitizePointsBanner(c.pointsBanner),
+    bottomBanner: {
+      image: url(asObj(c.bottomBanner).image),
+      mobileImage: url(asObj(c.bottomBanner).mobileImage),
+      href: url(asObj(c.bottomBanner).href),
+      alt: str(asObj(c.bottomBanner).alt, 120),
+    },
   };
 }
 

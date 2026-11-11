@@ -134,6 +134,8 @@ const MARQUEE_ITEMS = settings.marqueeItems;
   const baseHero = theme && theme.config.hero.length > 0 ? theme.config.hero : (await baseConfig()).hero;
   // Banner del club de puntos: el del tema vigente si lo activó, si no el del aspecto base.
   const pointsBanner = theme?.config.pointsBanner.enabled ? theme.config.pointsBanner : (await baseConfig()).pointsBanner;
+  // Banner de abajo: el de la campaña vigente si cargó uno, si no el del aspecto base
+  const bottomBanner = theme?.config.bottomBanner.image ? theme.config.bottomBanner : (await baseConfig()).bottomBanner;
   const heroSlides: HeroSlide[] =
     baseHero.length > 0
       ? baseHero.map(toSlide)
@@ -329,6 +331,21 @@ const MARQUEE_ITEMS = settings.marqueeItems;
 
       {/* Newsletter */}
       <NewsletterBanner storeName={storeName} />
+
+      {/* Banner de abajo (Temas → Banner al final): imagen a todo el ancho, con su alto natural para que no se corte */}
+      {bottomBanner.image && (
+        <section className="w-full">
+          {(() => {
+            const picture = (
+              <picture>
+                {bottomBanner.mobileImage && <source media="(max-width: 639px)" srcSet={bottomBanner.mobileImage} />}
+                <img src={bottomBanner.image} alt={bottomBanner.alt} className="block h-auto w-full" loading="lazy" />
+              </picture>
+            );
+            return bottomBanner.href ? <a href={bottomBanner.href} className="block">{picture}</a> : picture;
+          })()}
+        </section>
+      )}
     </div>
   );
 }

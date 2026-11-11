@@ -310,6 +310,7 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
     { id: "sec-slider", label: isBase ? "Slider de la portada" : "Slider de la campaña" },
     { id: "sec-tarjetas", label: "Tarjetas destacadas" },
     { id: "sec-puntos", label: "Banner club de puntos" },
+    { id: "sec-abajo", label: "Banner al final" },
     ...(isBase ? [] : [{ id: "sec-portadas", label: "Portadas de categorías" }]),
   ], [isBase]);
 
@@ -570,6 +571,21 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
         <button type="button" onClick={() => setPB({ ...DEFAULT_POINTS_BANNER, features: DEFAULT_POINTS_BANNER.features.map((f) => ({ ...f })), enabled: pb.enabled })} className="mt-4 cursor-pointer text-xs text-brand-muted hover:underline">
           Volver a los textos y colores de ejemplo
         </button>
+      </div>
+
+      <div id="sec-abajo" className={`${card} scroll-mt-4`}>
+        <p className="text-sm font-semibold text-brand-ink">Banner al final de la portada</p>
+        <p className="mt-1 text-xs text-brand-muted">
+          Solo una imagen, a todo el ancho, al final de la portada (arriba del pie). El alto se adapta a la imagen, así no se corta nada.
+          Recomendado: 2400 px de ancho. {!isBase && "Si no cargás una en esta campaña, se usa la del aspecto base."}
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <ImageField label="Imagen" value={c.bottomBanner?.image ?? ""} onChange={(url) => setConfig({ bottomBanner: { ...(c.bottomBanner ?? { image: "", mobileImage: "", href: "", alt: "" }), image: url } })} />
+          <ImageField label="Versión para celular (opcional)" value={c.bottomBanner?.mobileImage ?? ""} onChange={(url) => setConfig({ bottomBanner: { ...(c.bottomBanner ?? { image: "", mobileImage: "", href: "", alt: "" }), mobileImage: url } })} />
+          <div><label className={label}>Enlace (opcional)</label><input className={field} value={c.bottomBanner?.href ?? ""} onChange={(e) => setConfig({ bottomBanner: { ...(c.bottomBanner ?? { image: "", mobileImage: "", href: "", alt: "" }), href: e.target.value } })} placeholder="/tienda?ofertas=1" /></div>
+          <div><label className={label}>Descripción de la imagen (para buscadores y lectores de pantalla)</label><input className={field} value={c.bottomBanner?.alt ?? ""} maxLength={120} onChange={(e) => setConfig({ bottomBanner: { ...(c.bottomBanner ?? { image: "", mobileImage: "", href: "", alt: "" }), alt: e.target.value } })} /></div>
+        </div>
+        {!c.bottomBanner?.image && c.bottomBanner?.mobileImage && <p className="mt-3 text-xs text-amber-700">Falta la imagen principal: sin ella no se muestra el banner.</p>}
       </div>
 
       {!isBase && (
