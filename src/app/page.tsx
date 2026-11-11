@@ -121,6 +121,8 @@ const MARQUEE_ITEMS = settings.marqueeItems;
     videoUrl: s.videoUrl || null,
     eyebrow: s.eyebrow,
     title: s.title,
+    titleColor: s.titleColor || null,
+    titleAccentColor: s.titleAccentColor || null,
     subtitle: s.subtitle || null,
     promoText: s.promoText || null,
     buttons: s.buttons,

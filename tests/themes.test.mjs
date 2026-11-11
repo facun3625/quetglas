@@ -34,7 +34,7 @@ test('sanitize: URLs must be http(s) or site-relative with safe characters; limi
     hero: [
       { image: 'https://cdn.x.com/a.webp', title: 'Navidad', buttons: [{ label: 'Ver', href: '/tienda' }, { label: 'Mal', href: 'javascript:x' }, { label: '', href: '/x' }] },
       { image: 'javascript:alert(1)', title: 'sin imagen válida' },
-      { image: '/uploads/b.webp', title: '' },
+      { image: '/uploads/b.webp', title: '', titleColor: '#AABBCC', titleAccentColor: 'red;}' },
       ...Array.from({ length: 5 }, (_, i) => ({ image: `https://cdn.x.com/${i}.webp`, title: `T${i}` })),
     ],
     banners: [{ image: '//evil.com/x.png' }, { image: '/api/uploads/products/a.webp', title: 'T'.repeat(200), href: 'https://x.com/', alt: 'a'.repeat(300) }, ...Array.from({ length: 6 }, (_, i) => ({ image: `https://x.com/${i}.png` }))],
@@ -42,7 +42,9 @@ test('sanitize: URLs must be http(s) or site-relative with safe characters; limi
   assert.equal(c.backgroundImageUrl, '', 'URL con comillas / etiquetas se descarta');
   assert.equal(c.announcement.text.length, 160); assert.equal(c.announcement.href, ''); assert.equal(c.announcement.bg, '#112233'); assert.equal(c.announcement.color, '#ffffff');
   assert.equal(c.hero.length, 5, 'máximo 5 slides'); assert.deepEqual(c.hero[0].buttons, [{ label: 'Ver', href: '/tienda' }]);
-  assert.equal(c.hero.every((s) => s.image && s.title), true);
+  assert.equal(c.hero.every((s) => s.image), true, 'todos con imagen');
+  assert.equal(c.hero[1].title, '', 'slide de solo imagen (sin título) se conserva');
+  assert.equal(c.hero[1].titleColor, '#aabbcc'); assert.equal(c.hero[1].titleAccentColor, '', 'color inválido se descarta');
   assert.equal(c.banners.length, 6, 'máximo 6 tarjetas'); assert.equal(c.banners[0].title.length, 60); assert.equal(c.bannersTitle, ''); assert.equal(c.banners[0].image, '/api/uploads/products/a.webp'); assert.equal(c.banners[0].alt.length, 120);
 });
 

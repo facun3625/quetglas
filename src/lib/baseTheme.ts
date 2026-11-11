@@ -12,6 +12,8 @@ async function legacySlidesAsHero(): Promise<ThemeConfig["hero"]> {
     videoUrl: "",
     eyebrow: s.eyebrow,
     title: s.title,
+    titleColor: "",
+    titleAccentColor: "",
     subtitle: s.subtitle ?? "",
     promoText: s.promoText ?? "",
     buttons: (

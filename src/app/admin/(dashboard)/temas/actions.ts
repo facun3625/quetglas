@@ -59,10 +59,7 @@ function incompleteItems(config: ThemeConfig): string | null {
   const hero = Array.isArray(config?.hero) ? config.hero : [];
   for (let i = 0; i < hero.length; i++) {
     const s = hero[i];
-    const hasMedia = Boolean(s?.image?.trim() || s?.videoUrl?.trim());
-    if (!s?.title?.trim() && !hasMedia) return `El slide ${i + 1} está vacío: completalo o quitalo.`;
-    if (!s?.title?.trim()) return `Al slide ${i + 1} le falta el título.`;
-    if (!hasMedia) return `Al slide ${i + 1} le falta la imagen o el video.`;
+    if (!s?.image?.trim() && !s?.videoUrl?.trim()) return `Al slide ${i + 1} le falta la imagen o el video: subila o quitá el slide.`;
   }
   const banners = Array.isArray(config?.banners) ? config.banners : [];
   for (let i = 0; i < banners.length; i++) {

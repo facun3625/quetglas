@@ -21,7 +21,7 @@ const COLOR_FIELDS: { key: keyof ThemeConfig["colors"]; label: string; hint: str
   { key: "background", label: "Fondo general", hint: "color de fondo de la tienda" },
 ];
 
-const EMPTY_SLIDE: ThemeSlide = { image: "", videoUrl: "", eyebrow: "", title: "", subtitle: "", promoText: "", buttons: [] };
+const EMPTY_SLIDE: ThemeSlide = { image: "", videoUrl: "", eyebrow: "", title: "", titleColor: "", titleAccentColor: "", subtitle: "", promoText: "", buttons: [] };
 
 async function uploadImage(file: File): Promise<string | null> {
   const body = new FormData();
@@ -66,6 +66,20 @@ function ImageField({ value, onChange, label: text }: { value: string; onChange:
         {value && <button type="button" onClick={() => onChange("")} className="cursor-pointer text-xs text-red-600 hover:underline">Quitar</button>}
       </div>
       {failed && <p className="mt-1 text-xs text-red-600">No se pudo subir la imagen. Probá de nuevo o con otra (JPG, PNG o WebP).</p>}
+    </div>
+  );
+}
+
+// Color de una línea del título del slide. Vacío = el color por defecto (se muestra atenuado como referencia).
+function SlideColor({ text, value, fallback, onChange }: { text: string; value: string; fallback: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className={label}>{text}</label>
+      <div className="flex items-center gap-2">
+        <input type="color" value={value || fallback} onChange={(e) => onChange(e.target.value)} className={`h-9 w-12 cursor-pointer rounded border border-black/10 ${value ? "" : "opacity-50"}`} />
+        <span className="text-xs text-brand-muted">{value ? value : "por defecto"}</span>
+        {value && <button type="button" onClick={() => onChange("")} className="cursor-pointer text-xs text-brand-muted hover:underline">Usar el de siempre</button>}
+      </div>
     </div>
   );
 }
@@ -416,7 +430,7 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-brand-ink">{isBase ? "Slider de la portada" : "Slider de la campaña"}</p>
-            <p className="mt-1 text-xs text-brand-muted">{isBase ? "Es el slider de siempre de la tienda: se ve cuando no hay una campaña con slider propio." : "Si cargás slides, reemplazan al slider del aspecto base mientras este tema esté vigente. Si no cargás ninguno, se ve el del aspecto base."} Hasta {MAX_SLIDES} slides; cada uno necesita un título y una imagen o un video.</p>
+            <p className="mt-1 text-xs text-brand-muted">{isBase ? "Es el slider de siempre de la tienda: se ve cuando no hay una campaña con slider propio." : "Si cargás slides, reemplazan al slider del aspecto base mientras este tema esté vigente. Si no cargás ninguno, se ve el del aspecto base."} Hasta {MAX_SLIDES} slides; cada uno necesita una imagen o un video; los textos y botones son opcionales (sin texto, la imagen se ve sola, sin sombra).</p>
           </div>
           {c.hero.length < MAX_SLIDES && (
             <button type="button" onClick={() => setConfig({ hero: [...c.hero, { ...EMPTY_SLIDE }] })} className="cursor-pointer rounded-lg bg-brand-pink px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark">+ Agregar slide</button>
@@ -434,6 +448,8 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div><label className={label}>Texto superior</label><input className={field} value={s.eyebrow} maxLength={60} onChange={(e) => setSlide(i, { eyebrow: e.target.value })} /></div>
                 <div><label className={label}>Título (para 2 líneas, separalas con “/”)</label><input className={field} value={s.title.replace(/\n/g, " / ")} maxLength={80} onChange={(e) => setSlide(i, { title: e.target.value.replace(/\s*\/\s*/g, "\n") })} /></div>
+                <SlideColor text="Color de la 1.ª línea del título" value={s.titleColor} fallback="#ffffff" onChange={(v) => setSlide(i, { titleColor: v })} />
+                <SlideColor text="Color de la 2.ª línea del título" value={s.titleAccentColor} fallback={c.colors.primary} onChange={(v) => setSlide(i, { titleAccentColor: v })} />
                 <div className="sm:col-span-2"><label className={label}>Subtítulo</label><input className={field} value={s.subtitle} maxLength={200} onChange={(e) => setSlide(i, { subtitle: e.target.value })} /></div>
                 <div><label className={label}>Texto del círculo promocional</label><input className={field} value={s.promoText.replace(/\n/g, " / ")} maxLength={60} onChange={(e) => setSlide(i, { promoText: e.target.value.replace(/\s*\/\s*/g, "\n") })} placeholder="Ej.: 30% / OFF" /></div>
               </div>

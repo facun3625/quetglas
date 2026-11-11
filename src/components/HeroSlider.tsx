@@ -8,7 +8,9 @@ export type HeroSlide = {
   image: string; // imagen del slide; si tiene video, es su portada (carga mientras llega el video y en el celular)
   videoUrl?: string | null;
   eyebrow: string;
-  title: string; // hasta 2 líneas separadas por \n
+  title: string; // hasta 2 líneas separadas por \n (puede ir vacío: slide de solo imagen)
+  titleColor?: string | null; // 1.ª línea (por defecto blanco)
+  titleAccentColor?: string | null; // 2.ª línea (por defecto el color principal)
   subtitle?: string | null;
   promoText?: string | null; // hasta 2 líneas separadas por \n
   buttons: { label: string; href: string }[];
@@ -41,7 +43,9 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const [failedVideo, setFailedVideo] = useState<string | null>(null);
   if (!slide) return null;
 
-  const titleLines = slide.title.split("\n");
+  const titleLines = slide.title ? slide.title.split("\n") : [];
+  // Sin ningún texto el slide es solo la imagen: sin degradé encima
+  const hasText = Boolean(slide.eyebrow || titleLines.length || slide.subtitle || slide.buttons.length);
   const promoLines = slide.promoText?.split("\n") ?? [];
   // El círculo crece (círculo + tipografía) según cuánto texto se cargue,
   // hasta un tope — así una frase larga (ej. "Descuento 10% en
@@ -89,7 +93,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
         </AnimatePresence>
         {/* Oscurece la izquierda (donde va el texto) y deja la foto a la
             vista del lado derecho — la imagen cubre TODO el banner. */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+        {hasText && <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />}
       </div>
 
       {promoLines.length > 0 && (
@@ -112,16 +116,24 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
             transition={{ duration: 0.45, ease: "easeOut" }}
             className="max-w-lg"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/90 sm:text-sm">
-              {slide.eyebrow}
-            </p>
-            <h1 className="mt-3 text-4xl font-extrabold leading-[1.05] sm:text-6xl">
-              {titleLines.map((line, i) => (
-                <span key={i} className={`block ${i % 2 === 1 ? "text-brand-pink" : "text-white"}`}>
-                  {line}
-                </span>
-              ))}
-            </h1>
+            {slide.eyebrow && (
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-white/90 sm:text-sm">
+                {slide.eyebrow}
+              </p>
+            )}
+            {titleLines.length > 0 && (
+              <h1 className="text-4xl font-extrabold leading-[1.05] sm:text-6xl">
+                {titleLines.map((line, i) => {
+                  const accent = i % 2 === 1;
+                  const color = accent ? slide.titleAccentColor : slide.titleColor;
+                  return (
+                    <span key={i} className={`block ${color ? "" : accent ? "text-brand-pink" : "text-white"}`} style={color ? { color } : undefined}>
+                      {line}
+                    </span>
+                  );
+                })}
+              </h1>
+            )}
             {slide.subtitle && <p className="mt-4 text-sm text-white/90 sm:text-base">{slide.subtitle}</p>}
 
             {slide.buttons.length > 0 && (
