@@ -42,12 +42,12 @@ export function PointsBanner({ data }: { data: PointsBannerData }) {
           className="relative overflow-hidden rounded-3xl text-white shadow-sm"
           style={{ background: `linear-gradient(115deg, ${bg} 0%, ${bg} 50%, color-mix(in srgb, ${bg} 72%, #000) 100%)` }}
         >
-          {/* Decoración: franja diagonal más clara a la derecha y círculos suaves */}
-          <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] bg-white/[0.07] [clip-path:polygon(18%_0,100%_0,100%_100%,0_100%)] lg:block" />
-          <div className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full bg-white/[0.05]" />
-          <div className="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-white/[0.04]" />
+          {/* Decoración suave */}
+          <div className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full bg-white/[0.06]" />
+          <div className="pointer-events-none absolute -bottom-28 right-1/3 h-72 w-72 rounded-full bg-white/[0.05]" />
 
-          <div className="relative grid items-center gap-6 p-5 sm:px-8 sm:py-7 lg:grid-cols-[1.3fr_1fr] lg:gap-6">
+          <div className="relative grid items-center gap-6 p-5 sm:p-8 md:grid-cols-2 md:gap-10">
+            {/* Izquierda: el mensaje */}
             <div>
               {data.badge && (
                 <span className="inline-flex items-center gap-2 rounded-full bg-black/25 px-4 py-1.5 text-xs font-bold uppercase tracking-wider">
@@ -56,7 +56,7 @@ export function PointsBanner({ data }: { data: PointsBannerData }) {
                 </span>
               )}
               {titleLines.length > 0 && (
-                <h2 className="font-heading mt-3 text-4xl font-extrabold uppercase leading-[0.92] tracking-tight sm:text-5xl">
+                <h2 className="font-heading mt-4 text-5xl font-extrabold uppercase leading-[0.9] tracking-tight lg:text-6xl">
                   {titleLines.map((line, i) => (
                     <span key={i} className="block" style={i % 2 === 1 ? { color: accent } : undefined}>
                       {line}
@@ -65,68 +65,57 @@ export function PointsBanner({ data }: { data: PointsBannerData }) {
                 </h2>
               )}
               {data.ribbon && (
-                <p className="mt-2 inline-block -skew-x-6 rounded-md bg-black/30 px-4 py-1.5 text-base font-extrabold uppercase tracking-wide sm:text-lg">
+                <p className="mt-3 inline-block -skew-x-6 rounded-md bg-black/30 px-4 py-1.5 text-base font-extrabold uppercase tracking-wide sm:text-xl">
                   <span className="inline-block skew-x-6">{data.ribbon}</span>
                 </p>
               )}
-              {data.text && <p className="mt-3 max-w-md text-sm text-white/90 sm:text-base">{data.text}</p>}
+              {data.text && <p className="mt-4 max-w-sm text-sm text-white/90 sm:text-base">{data.text}</p>}
+              {data.image && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={data.image} alt={data.clubName || "Club de puntos"} className="mt-5 hidden max-h-[200px] w-auto object-contain drop-shadow-2xl md:block" loading="lazy" />
+              )}
+            </div>
 
+            {/* Derecha: el club, sus beneficios y la acción */}
+            <div className="rounded-2xl bg-white/10 p-5 ring-1 ring-white/20 backdrop-blur-sm sm:p-6">
+              {data.clubName && (
+                <p className="text-2xl uppercase tracking-wide sm:text-3xl">
+                  <span className="font-light">{clubFirst}</span>
+                  {clubRest.length > 0 && <span className="font-extrabold" style={{ color: accent }}> {clubRest.join(" ")}</span>}
+                </p>
+              )}
               {features.length > 0 && (
-                <ul className="mt-4 grid gap-3 min-[480px]:grid-cols-3">
+                <ul className={`divide-y divide-white/15 ${data.clubName ? "mt-4" : ""}`}>
                   {features.map((f, i) => {
                     const Icon = FEATURE_ICONS[i] ?? StarIcon;
                     return (
-                      <li key={i} className="flex items-center gap-2.5">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white/35">
+                      <li key={i} className="flex items-center gap-3 py-2.5">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/30" style={{ color: accent }}>
                           <Icon />
                         </span>
                         <span className="leading-tight">
-                          <span className="block text-xs font-bold uppercase">{f.title}</span>
-                          {f.subtitle && <span className="block text-[11px] text-white/75">{f.subtitle}</span>}
+                          <span className="block text-sm font-bold uppercase">{f.title}</span>
+                          {f.subtitle && <span className="block text-xs text-white/75">{f.subtitle}</span>}
                         </span>
                       </li>
                     );
                   })}
                 </ul>
               )}
-
               {data.buttonLabel && (
-                <PointsBannerButton label={data.buttonLabel} bg={bg} accent={accent}>
+                <PointsBannerButton label={data.buttonLabel} bg={bg} accent={accent} className="mt-4 w-full justify-center">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-4 w-4" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
                   </svg>
                 </PointsBannerButton>
               )}
               {data.footerText && (
-                <p className="mt-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/80">
+                <p className="mt-3 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/80">
                   <CartIcon />
                   {data.footerText}
                 </p>
               )}
             </div>
-
-            {(data.image || data.clubName) && (
-              <div className="flex flex-col items-center gap-4 lg:items-end">
-                {data.clubName && (
-                  <p className="text-2xl uppercase tracking-wide sm:text-3xl">
-                    <span className="font-light">{clubFirst}</span>
-                    {clubRest.length > 0 && <span className="font-extrabold" style={{ color: accent }}> {clubRest.join(" ")}</span>}
-                  </p>
-                )}
-                {data.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={data.image} alt={data.clubName || "Club de puntos"} className="max-h-[260px] w-auto max-w-full object-contain drop-shadow-2xl" loading="lazy" />
-                ) : (
-                  <div className="hidden items-center gap-5 lg:flex" aria-hidden="true">
-                    {FEATURE_ICONS.map((Icon, i) => (
-                      <span key={i} className={`flex items-center justify-center rounded-full bg-white/10 ring-1 ring-white/25 [&_svg]:h-7 [&_svg]:w-7 ${i === 1 ? "h-[4.5rem] w-[4.5rem] -translate-y-3" : "h-16 w-16"}`}>
-                        <Icon />
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>
