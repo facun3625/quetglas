@@ -283,6 +283,8 @@ model StoreSettings {
   // Logos e ícono (URL de imagen subida desde Configuración). Vacío = el logo original de la instalación.
   logoHeaderUrl String?
   logoFooterUrl String?
+  // Alto del logo del pie, en px (Configuración → Logo e íconos)
+  logoFooterHeight Int @default(56)
   faviconUrl    String?
 
   // Texto corto del pie de página (debajo del logo). Vacío = texto por defecto.

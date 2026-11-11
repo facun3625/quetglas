@@ -113,6 +113,15 @@ export default async function AdminConfiguracionPage({
             initialUrl={settings.logoFooterUrl ?? ""}
             fallbackUrl={settings.logoHeaderUrl || "/logo2.png"}
           />
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-muted">Tamaño del logo del pie</label>
+            <select name="logoFooterHeight" defaultValue={String(settings.logoFooterHeight)} className="w-full max-w-xs rounded-lg border border-black/10 px-3 py-2 text-sm text-brand-ink focus:border-brand-pink focus:outline-none">
+              {[[32, "Chico"], [44, "Mediano"], [56, "Grande"], [72, "Muy grande"], [96, "Enorme"], [128, "Gigante"]].map(([px, name]) => (
+                <option key={px} value={px}>{name} ({px} px de alto)</option>
+              ))}
+              {![32, 44, 56, 72, 96, 128].includes(settings.logoFooterHeight) && <option value={settings.logoFooterHeight}>{settings.logoFooterHeight} px</option>}
+            </select>
+          </div>
           <LogoField
             name="faviconUrl"
             label="Favicon (ícono de la pestaña)"

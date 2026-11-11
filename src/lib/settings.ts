@@ -56,6 +56,7 @@ export async function getSiteSettings() {
     franchiseName: storeNameOf(row),
     footerText: row.footerText?.trim() || DEFAULT_FOOTER_TEXT,
     logos: resolveLogos(row),
+    logoFooterHeight: row.logoFooterHeight,
     footerPages: await getFooterPages(),
     menuPages: await getMenuPages(),
     contactCards,

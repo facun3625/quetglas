@@ -351,7 +351,9 @@ export async function updateBrandSettings(formData: FormData) {
     // Solo imágenes que subió el propio panel (ruta local o URL https del almacenamiento)
     return /^(https:\/\/|\/api\/uploads\/)/.test(v) ? v : null;
   };
-  const data = { logoHeaderUrl: clean("logoHeaderUrl"), logoFooterUrl: clean("logoFooterUrl"), faviconUrl: clean("faviconUrl") };
+  const height = Number(formData.get("logoFooterHeight"));
+  const logoFooterHeight = Number.isFinite(height) ? Math.min(160, Math.max(24, Math.round(height))) : 56;
+  const data = { logoHeaderUrl: clean("logoHeaderUrl"), logoFooterUrl: clean("logoFooterUrl"), faviconUrl: clean("faviconUrl"), logoFooterHeight };
   await prisma.storeSettings.upsert({ where: { id: "global" }, create: { id: "global", ...data }, update: data });
   revalidatePath("/admin/configuracion");
   revalidatePath("/", "layout");

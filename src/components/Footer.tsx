@@ -72,7 +72,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       <div className={`mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-14 ${cards.length > 0 ? "justify-items-center text-center" : "sm:grid-cols-3"}`}>
         <div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={settings.logos.footer} alt={settings.franchiseName} className={`h-8 w-auto ${cards.length > 0 ? "mx-auto" : ""}`} />
+          <img src={settings.logos.footer} alt={settings.franchiseName} style={{ height: settings.logoFooterHeight }} className={`w-auto max-w-full object-contain ${cards.length > 0 ? "mx-auto" : ""}`} />
           <p className="mx-auto mt-4 max-w-xs text-sm text-brand-muted">{settings.footerText}</p>
           <div className={`mt-4 ${cards.length > 0 ? "flex justify-center" : ""}`}>
             <InstallPwaButton />
