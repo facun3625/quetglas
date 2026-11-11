@@ -97,15 +97,20 @@ const MARQUEE_ITEMS = settings.marqueeItems;
 
   // Locales del mapa: una pestaña por tarjeta de "Datos de contacto" que tenga dirección. Sin tarjetas con dirección,
   // se usa la dirección general de la tienda (sin pestañas).
+  // Siempre con el país: sin él, Google puede llevar a un lugar homónimo de otro país (ej.: "Country Plaza" de Colombia)
+  const mapQuery = (...parts: (string | null | undefined)[]) => {
+    const q = parts.map((p) => p?.trim()).filter(Boolean).join(", ");
+    return /argentina/i.test(q) ? q : `${q}, Argentina`;
+  };
   const cardLocations: StoreLocation[] = settings.contactCards
     .filter((c) => c.address)
-    .map((c) => ({ id: c.id, title: c.title, street: c.address!, city: settings.franchiseLocation, query: `${c.address}, ${settings.franchiseLocation}` }));
+    .map((c) => ({ id: c.id, title: c.title, street: c.address!, city: settings.franchiseLocation, query: mapQuery(c.address, settings.franchiseLocation) }));
   // Sin tarjetas con dirección ni dirección general cargada, no hay nada que mostrar y la sección "Dónde estamos" no aparece
   const locations: StoreLocation[] =
     cardLocations.length > 0
       ? cardLocations
       : settings.address
-        ? [{ id: "tienda", title: "Tienda", street: addressStreet, city: addressCity, query: settings.address }]
+        ? [{ id: "tienda", title: "Tienda", street: addressStreet, city: addressCity, query: mapQuery(settings.address) }]
         : [];
 
   // El slider se maneja dentro de cada tema (Temas y campañas). Si el tema vigente no tiene slides propios, se usa el slider
