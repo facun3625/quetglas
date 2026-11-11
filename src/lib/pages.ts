@@ -11,13 +11,7 @@ const SEED: { slug: string; title: string; content: string; enabled: boolean; sh
     enabled: true,
     content: "<p>Contá acá la historia de tu negocio: cuándo empezó, qué hacen, qué los diferencia y qué pueden esperar los clientes.</p>",
   },
-  {
-    slug: "contacto",
-    title: "Contacto",
-    enabled: true,
-    showContactForm: true,
-    content: "<p>¿Tenés una consulta? Escribinos y te respondemos a la brevedad.</p>",
-  },
+  // Sin página de Contacto: el menú "Contacto" lleva a los datos de contacto del pie (/#contacto).
   {
     slug: "terminos-y-condiciones",
     showInMenu: false,
