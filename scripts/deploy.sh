@@ -33,14 +33,26 @@ npm install
 echo "==> [3/6] prisma migrate deploy"
 npx prisma migrate deploy
 
-echo "==> [4/6] limpiando build viejo (.next)"
-rm -rf .next
+# Se compila en una carpeta aparte (.next-build) mientras la app sigue sirviendo la versión anterior desde .next.
+# Recién si la compilación sale bien se intercambian las carpetas y se reinicia: el sitio no se cae durante el build,
+# y si el build falla queda andando la versión anterior (set -e corta acá).
+echo "==> [4/6] npm run build (en .next-build; el sitio sigue andando)"
+rm -rf .next-build
+NEXT_DIST_DIR=.next-build npm run build
 
-echo "==> [5/6] npm run build"
-npm run build
+echo "==> [5/6] cambiando a la versión nueva"
+rm -rf .next.old
+[ -d .next ] && mv .next .next.old
+mv .next-build .next
 
 echo "==> [6/6] reiniciando pm2 ($PM2_APP)"
+pm2 flush "$PM2_APP" >/dev/null 2>&1 || true
 pm2 restart "$PM2_APP"
+rm -rf .next.old
+sleep 4
+PORT_ENV="$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '"' || true)"
+CODE="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:${PORT_ENV:-3000}/" || true)"
+echo "==> la portada responde: HTTP $CODE"
 
 echo ""
 echo "✅ Deploy listo. Últimas líneas de log:"

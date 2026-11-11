@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // El deploy compila en una carpeta aparte (NEXT_DIST_DIR=.next-build) y la cambia por .next recién al terminar bien:
+  // así el sitio sigue andando durante la compilación (ver scripts/deploy.sh).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Server Actions (crear/editar hero slides, comprobantes de transferencia)
   // suben imágenes como multipart/form-data — el límite por defecto de 1MB
   // es demasiado chico para fotos reales. Nginx ya acepta hasta 50MB
