@@ -14,6 +14,8 @@ import { BenefitsStrip } from "@/components/BenefitsStrip";
 import { ensureBaseTheme } from "@/lib/baseTheme";
 import { sanitizeThemeConfig, type ThemeSlide } from "@/lib/themes";
 import { StoreMap, type StoreLocation } from "@/components/StoreMap";
+import { PointsBanner } from "@/components/PointsBanner";
+import { getStoreSettings as getPointsSettings } from "@/lib/points";
 import type { ProductListItem } from "@/types/catalog";
 
 import { storeNameOf } from "@/lib/storeName";
@@ -127,7 +129,15 @@ const MARQUEE_ITEMS = settings.marqueeItems;
     promoText: s.promoText || null,
     buttons: s.buttons,
   });
-  const baseHero = theme && theme.config.hero.length > 0 ? theme.config.hero : sanitizeThemeConfig((await ensureBaseTheme())?.config).hero;
+  let baseConfigP: Promise<ReturnType<typeof sanitizeThemeConfig>> | null = null;
+  const baseConfig = () => (baseConfigP ??= ensureBaseTheme().then((b) => sanitizeThemeConfig(b?.config)));
+  const baseHero = theme && theme.config.hero.length > 0 ? theme.config.hero : (await baseConfig()).hero;
+  // Banner del club de puntos: el del tema vigente si lo activó, si no el del aspecto base. Solo con el sistema de puntos activo.
+  const pointsBanner = (await getPointsSettings()).pointsEnabled
+    ? theme?.config.pointsBanner.enabled
+      ? theme.config.pointsBanner
+      : (await baseConfig()).pointsBanner
+    : null;
   const heroSlides: HeroSlide[] =
     baseHero.length > 0
       ? baseHero.map(toSlide)
@@ -257,6 +267,9 @@ const MARQUEE_ITEMS = settings.marqueeItems;
         </div>
         </div>
       </section>
+
+      {/* Club de puntos (Temas → Banner del club de puntos) */}
+      {pointsBanner?.enabled && <PointsBanner data={pointsBanner} />}
 
       {/* Ofertas y promociones */}
       {offerProducts.length > 0 && (

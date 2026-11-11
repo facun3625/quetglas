@@ -22,6 +22,45 @@ export type ButtonStyle = "pill" | "rounded" | "square";
 // titleColor / titleAccentColor: colores de la 1.ª y 2.ª línea del título (vacío = blanco / color principal de la tienda)
 export type ThemeSlide = { image: string; videoUrl: string; eyebrow: string; title: string; titleColor: string; titleAccentColor: string; subtitle: string; promoText: string; buttons: { label: string; href: string }[] };
 
+// Banner del club de puntos: ocupa todo el ancho del inicio, armado con textos (no es una imagen), así se puede editar
+// desde Temas. title: 2 líneas separadas por \n. image: opcional, a la derecha (ej.: un celular con la tienda).
+export type PointsBannerFeature = { title: string; subtitle: string };
+export type PointsBanner = {
+  enabled: boolean;
+  badge: string;
+  title: string;
+  ribbon: string;
+  text: string;
+  features: PointsBannerFeature[];
+  buttonLabel: string;
+  buttonHref: string;
+  footerText: string;
+  clubName: string;
+  image: string;
+  bg: string;
+  accent: string;
+};
+
+export const DEFAULT_POINTS_BANNER: PointsBanner = {
+  enabled: false,
+  badge: "Adherite gratis",
+  title: "Sumá\npuntos",
+  ribbon: "en cada compra",
+  text: "Canjeá beneficios exclusivos con Club Quetglas",
+  features: [
+    { title: "Sumá puntos", subtitle: "en cada compra" },
+    { title: "Accedé a descuentos", subtitle: "exclusivos" },
+    { title: "Canjeá beneficios", subtitle: "que te premian" },
+  ],
+  buttonLabel: "Quiero mi cuenta",
+  buttonHref: "/registro",
+  footerText: "Comprá en nuestra tienda online",
+  clubName: "Club Quetglas",
+  image: "",
+  bg: "#551751",
+  accent: "#f5c451",
+};
+
 export type ThemeConfig = {
   colors: { primary: string; primaryDark: string; ink: string; muted: string; soft: string; background: string };
   headingFont: FontKey;
@@ -35,6 +74,7 @@ export type ThemeConfig = {
   // Portadas de categoría propias de esta campaña (categoryId -> url). Sin entrada para una categoría, se usa
   // la del aspecto base (Category.imageUrl). No aplica al aspecto base en sí, que usa Category.imageUrl directo.
   categoryImages: Record<string, string>;
+  pointsBanner: PointsBanner;
 };
 
 // Los colores de la tienda tal cual están hoy (el "tema base")
@@ -56,6 +96,7 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   hero: [],
   bannersTitle: "",
   banners: [],
+  pointsBanner: DEFAULT_POINTS_BANNER,
   categoryImages: {},
 };
 
@@ -135,6 +176,30 @@ export function sanitizeThemeConfig(input: unknown): ThemeConfig {
         .filter(([, v]) => v)
         .slice(0, 200)
     ),
+    pointsBanner: sanitizePointsBanner(c.pointsBanner),
+  };
+}
+
+// Sin datos guardados (temas anteriores al banner) vienen los textos de ejemplo, apagado
+function sanitizePointsBanner(input: unknown): PointsBanner {
+  if (input === undefined || input === null) return { ...DEFAULT_POINTS_BANNER, features: DEFAULT_POINTS_BANNER.features.map((f) => ({ ...f })) };
+  const p = asObj(input);
+  return {
+    enabled: p.enabled === true,
+    badge: str(p.badge, 40),
+    title: str(p.title, 60),
+    ribbon: str(p.ribbon, 40),
+    text: str(p.text, 140),
+    features: asArray(p.features)
+      .slice(0, 3)
+      .map((f) => ({ title: str(asObj(f).title, 40), subtitle: str(asObj(f).subtitle, 40) })),
+    buttonLabel: str(p.buttonLabel, 30),
+    buttonHref: url(p.buttonHref),
+    footerText: str(p.footerText, 80),
+    clubName: str(p.clubName, 40),
+    image: url(p.image),
+    bg: hex(p.bg, DEFAULT_POINTS_BANNER.bg),
+    accent: hex(p.accent, DEFAULT_POINTS_BANNER.accent),
   };
 }
 

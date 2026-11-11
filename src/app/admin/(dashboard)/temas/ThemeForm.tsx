@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { isoToLocalInput, localInputToIso } from "@/lib/datetimeLocal";
 import { checkVideoUrl } from "@/lib/video";
-import { FONT_CHOICES, MAX_BANNERS, MAX_SLIDES, type ButtonStyle, type FontKey, type ThemeConfig, type ThemeSlide } from "@/lib/themes";
+import { DEFAULT_POINTS_BANNER, FONT_CHOICES, MAX_BANNERS, MAX_SLIDES, type PointsBanner, type ButtonStyle, type FontKey, type ThemeConfig, type ThemeSlide } from "@/lib/themes";
 import type { CategoryItem } from "@/types/catalog";
 import { probeVideo, saveTheme, type ThemeInput } from "./actions";
 
@@ -290,6 +290,13 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
     else delete next[categoryId];
     setConfig({ categoryImages: next });
   };
+  const pb = c.pointsBanner ?? DEFAULT_POINTS_BANNER;
+  const setPB = (patch: Partial<PointsBanner>) => setConfig({ pointsBanner: { ...pb, ...patch } });
+  const setFeature = (i: number, patch: Partial<PointsBanner["features"][number]>) => {
+    const features = [0, 1, 2].map((n) => pb.features[n] ?? { title: "", subtitle: "" });
+    features[i] = { ...features[i], ...patch };
+    setPB({ features });
+  };
   const font = FONT_CHOICES[c.headingFont];
   const categoryById = useMemo(() => new Map(categories.map((cat) => [cat.id, cat])), [categories]);
   // Secciones del editor (menú lateral): el aspecto base no tiene nombre, programación ni portadas de categoría
@@ -302,6 +309,7 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
     { id: "sec-anuncio", label: "Barra de anuncio" },
     { id: "sec-slider", label: isBase ? "Slider de la portada" : "Slider de la campaña" },
     { id: "sec-tarjetas", label: "Tarjetas destacadas" },
+    { id: "sec-puntos", label: "Banner club de puntos" },
     ...(isBase ? [] : [{ id: "sec-portadas", label: "Portadas de categorías" }]),
   ], [isBase]);
 
@@ -501,6 +509,53 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
           {c.banners.length === 0 && <p className="text-sm text-brand-muted sm:col-span-2 lg:col-span-3">Todavía no cargaste tarjetas. No se muestra ninguna sección.</p>}
         </div>
         {c.banners.some((b) => !b.image) && <p className="mt-3 text-xs text-amber-700">Las tarjetas sin imagen no se muestran.</p>}
+      </div>
+
+      <div id="sec-puntos" className={`${card} scroll-mt-4`}>
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-brand-ink">Banner del club de puntos</p>
+            <p className="mt-1 text-xs text-brand-muted">
+              Banner a todo el ancho en el inicio (debajo de “Explorá por categoría”) que invita a sumarse al club de puntos. Se arma con estos
+              textos y colores. Solo se ve si el sistema de puntos está activo (menú Puntos).
+              {!isBase && " Si no lo activás en esta campaña, se usa el del aspecto base."}
+            </p>
+          </div>
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-brand-ink">
+            <input type="checkbox" checked={pb.enabled} onChange={(e) => setPB({ enabled: e.target.checked })} className="h-4 w-4 accent-brand-pink" />
+            Mostrar el banner
+          </label>
+        </div>
+        <div className={`grid gap-3 sm:grid-cols-2 ${pb.enabled ? "" : "opacity-60"}`}>
+          <div><label className={label}>Etiqueta de arriba</label><input className={field} value={pb.badge} maxLength={40} onChange={(e) => setPB({ badge: e.target.value })} placeholder="Adherite gratis" /></div>
+          <div><label className={label}>Nombre del club (la 2.ª palabra va resaltada)</label><input className={field} value={pb.clubName} maxLength={40} onChange={(e) => setPB({ clubName: e.target.value })} placeholder="Club Quetglas" /></div>
+          <div><label className={label}>Título grande (2 líneas, separalas con “/”)</label><input className={field} value={pb.title.replace(/\n/g, " / ")} maxLength={60} onChange={(e) => setPB({ title: e.target.value.replace(/\s*\/\s*/g, "\n") })} placeholder="Sumá / puntos" /></div>
+          <div><label className={label}>Franja debajo del título</label><input className={field} value={pb.ribbon} maxLength={40} onChange={(e) => setPB({ ribbon: e.target.value })} placeholder="en cada compra" /></div>
+          <div className="sm:col-span-2"><label className={label}>Texto</label><input className={field} value={pb.text} maxLength={140} onChange={(e) => setPB({ text: e.target.value })} placeholder="Canjeá beneficios exclusivos con Club Quetglas" /></div>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="grid grid-cols-2 gap-2 sm:col-span-2">
+              <div><label className={label}>Beneficio {i + 1}</label><input className={field} value={pb.features[i]?.title ?? ""} maxLength={40} onChange={(e) => setFeature(i, { title: e.target.value })} /></div>
+              <div><label className={label}>Bajada</label><input className={field} value={pb.features[i]?.subtitle ?? ""} maxLength={40} onChange={(e) => setFeature(i, { subtitle: e.target.value })} /></div>
+            </div>
+          ))}
+          <div><label className={label}>Texto del botón</label><input className={field} value={pb.buttonLabel} maxLength={30} onChange={(e) => setPB({ buttonLabel: e.target.value })} placeholder="Quiero mi cuenta" /></div>
+          <div><label className={label}>Enlace del botón</label><input className={field} value={pb.buttonHref} onChange={(e) => setPB({ buttonHref: e.target.value })} placeholder="/registro" /></div>
+          <div className="sm:col-span-2"><label className={label}>Texto de abajo</label><input className={field} value={pb.footerText} maxLength={80} onChange={(e) => setPB({ footerText: e.target.value })} placeholder="Comprá en nuestra tienda online" /></div>
+          <div>
+            <label className={label}>Color de fondo</label>
+            <div className="flex items-center gap-2"><input type="color" value={pb.bg} onChange={(e) => setPB({ bg: e.target.value })} className="h-9 w-12 cursor-pointer rounded border border-black/10" /><span className="text-xs text-brand-muted">{pb.bg}</span></div>
+          </div>
+          <div>
+            <label className={label}>Color de acento (2.ª línea del título y botón)</label>
+            <div className="flex items-center gap-2"><input type="color" value={pb.accent} onChange={(e) => setPB({ accent: e.target.value })} className="h-9 w-12 cursor-pointer rounded border border-black/10" /><span className="text-xs text-brand-muted">{pb.accent}</span></div>
+          </div>
+          <div className="sm:col-span-2">
+            <ImageField label="Imagen a la derecha (opcional; ej.: un celular con la tienda, PNG sin fondo)" value={pb.image} onChange={(url) => setPB({ image: url })} />
+          </div>
+        </div>
+        <button type="button" onClick={() => setPB({ ...DEFAULT_POINTS_BANNER, features: DEFAULT_POINTS_BANNER.features.map((f) => ({ ...f })), enabled: pb.enabled })} className="mt-4 cursor-pointer text-xs text-brand-muted hover:underline">
+          Volver a los textos y colores de ejemplo
+        </button>
       </div>
 
       {!isBase && (
