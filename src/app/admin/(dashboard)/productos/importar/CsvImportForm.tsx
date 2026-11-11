@@ -13,7 +13,7 @@ export function CsvImportForm() {
         action={(formData) => start(async () => setResult(await importPriceStockCsv(formData)))}
         className="flex flex-wrap items-center gap-3"
       >
-        <input type="file" name="file" accept=".csv,text/csv" required className="text-sm" />
+        <input type="file" name="file" accept=".csv,text/csv" required className="cursor-pointer text-sm text-brand-muted file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-pink file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-pink-dark" />
         <button type="submit" disabled={pending} className="cursor-pointer rounded-lg bg-brand-pink px-4 py-2 text-sm font-semibold text-white hover:bg-brand-pink-dark disabled:opacity-60">
           {pending ? "Importando…" : "Importar"}
         </button>

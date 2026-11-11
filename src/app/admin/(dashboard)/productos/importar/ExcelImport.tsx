@@ -163,11 +163,11 @@ export function ExcelImport() {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1 block text-sm font-semibold text-brand-ink">Excel de productos (.xlsx)</span>
-          <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="w-full text-sm" onChange={() => setAnalysis(null)} />
+          <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="w-full cursor-pointer rounded-xl border-2 border-dashed border-brand-pink/30 bg-brand-soft/60 p-3 text-sm text-brand-muted transition-colors hover:border-brand-pink file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-pink file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-pink-dark" onChange={() => setAnalysis(null)} />
         </label>
         <label className="block">
           <span className="mb-1 block text-sm font-semibold text-brand-ink">Imágenes en .zip <span className="font-normal text-brand-muted">(opcional)</span></span>
-          <input ref={zipRef} type="file" accept=".zip,application/zip" className="w-full text-sm" onChange={() => setAnalysis(null)} />
+          <input ref={zipRef} type="file" accept=".zip,application/zip" className="w-full cursor-pointer rounded-xl border-2 border-dashed border-brand-pink/30 bg-brand-soft/60 p-3 text-sm text-brand-muted transition-colors hover:border-brand-pink file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-pink file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-pink-dark" onChange={() => setAnalysis(null)} />
           <span className="mt-1 block text-xs text-brand-muted">Solo si en la columna imagenes pusiste nombres de archivo en vez de links.</span>
         </label>
       </div>
