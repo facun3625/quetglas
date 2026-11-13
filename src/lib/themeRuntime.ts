@@ -1,11 +1,13 @@
 import { cache } from "react";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ensureBaseTheme } from "@/lib/baseTheme";
 import { pickActiveTheme, sanitizeThemeConfig, type ThemeConfig } from "@/lib/themes";
 
+// Cookie de la vista previa vieja (ya no se usa; solo se borra al salir, por si quedó de antes)
 export const THEME_PREVIEW_COOKIE = "theme_preview";
+export const THEME_PREVIEW_PARAM = "vista_previa";
 
 export type RequestTheme = { id: string; name: string; config: ThemeConfig; previewing: boolean };
 
@@ -13,7 +15,8 @@ export type RequestTheme = { id: string; name: string; config: ThemeConfig; prev
 // fechas. Sin tema vigente devuelve null y el sitio se ve con su aspecto base. Se cachea por pedido.
 export const getThemeForRequest = cache(async (): Promise<RequestTheme | null> => {
   try {
-    const previewId = (await cookies()).get(THEME_PREVIEW_COOKIE)?.value;
+    // Lo pone proxy.ts a partir de ?vista_previa=<id> (solo para administradores; igual se vuelve a verificar acá)
+    const previewId = (await headers()).get("x-theme-preview");
     if (previewId && /^[A-Za-z0-9_-]{1,64}$/.test(previewId)) {
       const session = await auth();
       if (session?.user?.role === "admin" || session?.user?.role === "superadmin") {

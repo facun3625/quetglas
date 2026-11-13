@@ -637,7 +637,7 @@ export function ThemeForm({ initial, isBase = false, categories = [] }: { initia
           Solo guardar
         </button>
         </>)}
-        {form.id && <a href={`/api/admin/themes/preview?id=${form.id}`} className="rounded-lg border border-black/10 px-4 py-2.5 text-sm font-medium text-brand-ink hover:bg-brand-soft">Vista previa en la tienda</a>}
+        {form.id && <a href={`/api/admin/themes/preview?id=${form.id}`} target="_blank" rel="noopener" title="Se abre en otra pestaña con lo último guardado" className="rounded-lg border border-black/10 px-4 py-2.5 text-sm font-medium text-brand-ink hover:bg-brand-soft">Vista previa en la tienda ↗</a>}
         <button onClick={() => router.push("/admin/temas")} className="cursor-pointer rounded-lg px-4 py-2.5 text-sm text-brand-muted hover:bg-black/5">Volver</button>
         {saved && <span className="rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-green-700">✓ Guardado correctamente</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}

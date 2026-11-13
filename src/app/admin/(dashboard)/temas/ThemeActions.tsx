@@ -17,7 +17,7 @@ export function ThemeCardActions({ id, enabled, hasSchedule, isLive, expired }: 
   return (
     <div className="mt-3 flex flex-wrap gap-2">
       {dialog}
-      <a href={`/api/admin/themes/preview?id=${id}`} className={btn}>Vista previa</a>
+      <a href={`/api/admin/themes/preview?id=${id}`} target="_blank" rel="noopener" className={btn}>Vista previa ↗</a>
       <Link href={`/admin/temas/${id}`} className={btn}>Editar</Link>
       {enabled ? (
         <>
@@ -92,7 +92,7 @@ export function BaseThemeCard({ baseId, colors, campaignActive }: { baseId: stri
                 Activar aspecto base
               </button>
             )}
-            {baseId && <a href={`/api/admin/themes/preview?id=${baseId}`} className={btn}>Vista previa</a>}
+            {baseId && <a href={`/api/admin/themes/preview?id=${baseId}`} target="_blank" rel="noopener" className={btn}>Vista previa ↗</a>}
             <button
               disabled={pending}
               className={campaignActive ? btn : btnPrimary}

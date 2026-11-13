@@ -66,10 +66,17 @@ export default auth(async (req) => {
     return NextResponse.next();
   }
 
+  // Vista previa de un tema: va en el link (?vista_previa=<id>), no en una cookie, así solo la pestaña de la vista
+  // previa muestra el tema y en las demás se sigue viendo la tienda real. Llega al layout como header; el que mande el
+  // navegador se descarta y solo se pone para administradores.
+  const headers = new Headers(req.headers);
+  headers.delete("x-theme-preview");
+  const previewId = req.nextUrl.searchParams.get("vista_previa");
+  if (isAdminUser && previewId && /^[A-Za-z0-9_-]{1,64}$/.test(previewId)) headers.set("x-theme-preview", previewId);
+
   // Alguien visitando /mantenimiento directo también lleva el encabezado
   // minimalista (ver comentario más abajo sobre por qué hace falta el header).
   if (pathname === "/mantenimiento") {
-    const headers = new Headers(req.headers);
     headers.set("x-maintenance-page", "1");
     return NextResponse.next({ request: { headers } });
   }
@@ -82,12 +89,11 @@ export default auth(async (req) => {
     // usePathname()) no tiene forma de saber que en realidad está sirviendo
     // /mantenimiento. Este header viaja hasta el layout (que sí lo puede
     // leer con headers(), del lado del server) para avisarle.
-    const headers = new Headers(req.headers);
     headers.set("x-maintenance-page", "1");
     return NextResponse.rewrite(new URL("/mantenimiento", req.url), { request: { headers } });
   }
 
-  return NextResponse.next();
+  return NextResponse.next({ request: { headers } });
 });
 
 export const config = {

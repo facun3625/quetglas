@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -31,6 +31,7 @@ export function SiteChrome({
   isMaintenancePage,
   announcement,
   previewThemeName,
+  previewThemeId = null,
 }: {
   children: ReactNode;
   settings: SiteSettings;
@@ -39,6 +40,7 @@ export function SiteChrome({
   announcement: { text: string; href: string; bg: string; color: string; marquee?: boolean } | null;
   // Si un administrador está viendo la vista previa de un tema, su nombre
   previewThemeName: string | null;
+  previewThemeId?: string | null;
 }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
@@ -107,12 +109,38 @@ export function SiteChrome({
       )}
       <SitePopupModal popup={settings.popup} />
       <PushPrompt />
+      {previewThemeId && <KeepPreviewInLinks themeId={previewThemeId} />}
       {previewThemeName && (
         <div className="fixed inset-x-0 bottom-0 z-[90] flex flex-wrap items-center justify-center gap-3 bg-brand-ink px-4 py-2.5 text-center text-xs text-white sm:text-sm">
-          <span>Vista previa del tema <b>{previewThemeName}</b>: solo la ves vos.</span>
-          <a href="/api/admin/themes/preview?exit=1" className="rounded-full bg-white px-3 py-1 font-semibold text-brand-ink hover:bg-brand-soft">Salir de la vista previa</a>
+          <span>Vista previa del tema <b>{previewThemeName}</b>: solo la ves vos, en esta pestaña.</span>
+          {/* Link común (no <Link>): recarga completa sin el parámetro, para salir de verdad de la vista previa */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <span data-preview-exit><a href="/" className="rounded-full bg-white px-3 py-1 font-semibold text-brand-ink hover:bg-brand-soft">Ver la tienda real</a></span>
         </div>
       )}
     </>
   );
+}
+
+// En la pestaña de vista previa, los links internos siguen llevando ?vista_previa=<id> (así se puede recorrer la tienda
+// con el tema). Se intercepta el clic antes que el router y se navega con recarga completa a la misma URL con el parámetro.
+function KeepPreviewInLinks({ themeId }: { themeId: string }) {
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
+      const url = new URL(a.href, window.location.href);
+      if (url.origin !== window.location.origin || /^\/(admin|api)(\/|$)/.test(url.pathname)) return;
+      if (url.searchParams.get("vista_previa") === themeId) return;
+      if (a.closest("[data-preview-exit]")) return;
+      url.searchParams.set("vista_previa", themeId);
+      e.preventDefault();
+      e.stopPropagation();
+      window.location.assign(url.toString());
+    }
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [themeId]);
+  return null;
 }
